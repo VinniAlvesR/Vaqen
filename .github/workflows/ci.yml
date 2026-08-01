@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://user:password@localhost:5432/vaqen
+      DIRECT_URL: postgresql://user:password@localhost:5432/vaqen
+      BETTER_AUTH_SECRET: ci-secret-with-at-least-32-characters-long
+      BETTER_AUTH_URL: http://localhost:3000
+      BETA_INVITE_ONLY: "true"
+      GOOGLE_CLIENT_ID: ci-google-client
+      GOOGLE_CLIENT_SECRET: ci-google-secret
+      RESEND_API_KEY: re_ci
+      UPSTASH_REDIS_REST_URL: https://ci.example.com
+      UPSTASH_REDIS_REST_TOKEN: ci-token
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test:coverage
+      - run: pnpm build
+
+  e2e:
+    if: ${{ vars.E2E_BASE_URL != '' }}
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ vars.E2E_BASE_URL }}
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+          E2E_SIGNUP_INVITE: ${{ secrets.E2E_SIGNUP_INVITE }}
+          E2E_SIGNUP_EMAIL: ${{ secrets.E2E_SIGNUP_EMAIL }}
+          E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+
+  integration:
+    if: ${{ vars.NEON_TEST_ENABLED == 'true' }}
+    needs: validate
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.TEST_DIRECT_URL }}
+      BETTER_AUTH_SECRET: integration-secret-with-at-least-32-characters
+      BETTER_AUTH_URL: http://localhost:3000
+      RUN_INTEGRATION_TESTS: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
+      - run: pnpm db:deploy
+      - run: pnpm test:integration

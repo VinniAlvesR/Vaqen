@@ -1,6 +1,9 @@
-export type Client ={
-id: number
-name: string
-email: string
-company: string
+export type Client = {
+  id: string
+  name: string
+  email: string
+  phone?: string
+  company: string
+  createdAt?: string
+  archivedAt?: string | null
 }

@@ -1,0 +1,5 @@
+- Projeto: Vaqen
+- Stack: Next.js + Tailwind + API Routes
+- Estado: CRUD clientes pronto
+- Banco: em implementação (SQLite)
+- Objetivo atual: finalizar V1 clientes

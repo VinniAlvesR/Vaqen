@@ -1,0 +1,14 @@
+<svg width="760" height="220" viewBox="0 0 760 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="24" y="34" width="152" height="152" rx="36" fill="url(#bg)"/>
+  <path d="M62 72H84L100 119L117 72H139L112 135C109 142 104 146 99 146C93 146 89 142 86 135L62 72Z" fill="white"/>
+  <path d="M85 72L100 119L107 101L96 72H85Z" fill="#38BDF8"/>
+  <text x="208" y="116" fill="white" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800">Vaqen</text>
+  <text x="211" y="154" fill="#CBD5E1" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">Gestão de projetos com fluxo</text>
+  <defs>
+    <linearGradient id="bg" x1="40" y1="44" x2="170" y2="182" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4F46E5"/>
+      <stop offset="0.52" stop-color="#7C3AED"/>
+      <stop offset="1" stop-color="#0EA5E9"/>
+    </linearGradient>
+  </defs>
+</svg>

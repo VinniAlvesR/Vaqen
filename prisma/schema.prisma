@@ -1,0 +1,328 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Plan {
+  FREE
+  PRO
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  PAUSED
+}
+
+enum ConsentType {
+  TERMS
+  PRIVACY
+  MARKETING
+}
+
+enum FeedbackType {
+  PROBLEM
+  SUGGESTION
+  QUESTION
+  PRAISE
+}
+
+enum FeedbackStatus {
+  OPEN
+  REVIEWED
+  PLANNED
+  DONE
+  DISMISSED
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sessions     Session[]
+  accounts     Account[]
+  clients      Client[]
+  projects     Project[]
+  tasks        Task[]
+  comments     TaskComment[]
+  activities   ActivityLog[]
+  subscription Subscription?
+  preferences  UserPreference?
+  consents     LegalConsent[]
+  feedbacks    Feedback[]
+  invites      BetaInvite[]    @relation("InviteCreator")
+
+  @@index([createdAt])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@index([expiresAt])
+  @@map("verification")
+}
+
+model Client {
+  id         String    @id @default(cuid())
+  userId     String
+  name       String
+  email      String?
+  phone      String?
+  company    String?
+  archivedAt DateTime?
+  deletedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projects   Project[]
+
+  @@index([userId, deletedAt, archivedAt])
+  @@index([userId, name])
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  userId      String
+  clientId    String?
+  name        String
+  description String?
+  status      String    @default("Planejamento")
+  priority    String    @default("Média")
+  startDate   DateTime?
+  dueDate     DateTime?
+  completedAt DateTime?
+  archivedAt  DateTime?
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client      Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+
+  @@index([userId, deletedAt, archivedAt])
+  @@index([userId, clientId])
+  @@index([userId, dueDate])
+}
+
+model Task {
+  id          String          @id @default(cuid())
+  userId      String
+  projectId   String?
+  title       String
+  description String?
+  status      String          @default("Pendente")
+  priority    String          @default("Média")
+  dueDate     DateTime?
+  completedAt DateTime?
+  deletedAt   DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project     Project?        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  checklist   ChecklistItem[]
+  subtasks    Subtask[]
+  comments    TaskComment[]
+
+  @@index([userId, deletedAt, status])
+  @@index([userId, projectId])
+  @@index([userId, dueDate])
+}
+
+model ChecklistItem {
+  id        String   @id @default(cuid())
+  taskId    String
+  text      String
+  completed Boolean  @default(false)
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, position])
+}
+
+model Subtask {
+  id          String    @id @default(cuid())
+  taskId      String
+  title       String
+  status      String    @default("Pendente")
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, status])
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, createdAt])
+  @@index([userId])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  entity    String
+  entityId  String?
+  action    String
+  detail    String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, entity, entityId])
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  plan                 Plan               @default(PRO)
+  status               SubscriptionStatus @default(TRIALING)
+  trialStartsAt        DateTime           @default(now())
+  trialEndsAt          DateTime
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  stripeEventCreatedAt Int                @default(0)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, trialEndsAt])
+}
+
+model StripeEvent {
+  id          String   @id
+  type        String
+  livemode    Boolean
+  processedAt DateTime @default(now())
+  payloadHash String?
+
+  @@index([type, processedAt])
+}
+
+model UserPreference {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  locale    String   @default("pt-BR")
+  timezone  String   @default("America/Sao_Paulo")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model LegalConsent {
+  id        String      @id @default(cuid())
+  userId    String
+  type      ConsentType
+  version   String
+  accepted  Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  ipAddress String?
+  userAgent String?
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, createdAt])
+}
+
+model Feedback {
+  id        String         @id @default(cuid())
+  userId    String
+  type      FeedbackType
+  rating    Int?
+  message   String
+  pageUrl   String?
+  userAgent String?
+  status    FeedbackStatus @default(OPEN)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+model BetaInvite {
+  id          String    @id @default(cuid())
+  codeHash    String    @unique
+  email       String?
+  expiresAt   DateTime
+  maxUses     Int       @default(1)
+  useCount    Int       @default(0)
+  createdById String?
+  createdAt   DateTime  @default(now())
+  revokedAt   DateTime?
+  createdBy   User?     @relation("InviteCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([email, expiresAt])
+}
