@@ -12,7 +12,9 @@ export const metadata: Metadata = {
   title: "Vaqen Beta",
   description: "Gerenciamento de clientes, projetos e tarefas com foco no trabalho de hoje.",
   icons: {
-    icon: [{ url: "/vaqen-icon.svg", type: "image/svg+xml" }],
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    shortcut: ["/icon.svg"],
+    apple: [{ url: "/icon.svg", type: "image/svg+xml" }],
   },
 };
 
@@ -55,5 +57,6 @@ export default function RootLayout({
     </html>
   );
 }
+
 
 
