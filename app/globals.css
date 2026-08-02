@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -371,3 +373,5 @@ textarea {
 .dark .vaqen-feedback-option-idle .vaqen-feedback-option-description {
   color: #94a3b8 !important;
 }
+
+
