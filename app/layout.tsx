@@ -12,14 +12,9 @@ export const metadata: Metadata = {
   title: "Vaqen Beta",
   description: "Gerenciamento de clientes, projetos e tarefas com foco no trabalho de hoje.",
   icons: {
-    icon: [
-      { url: "/favicon.ico?v=4", sizes: "any" },
-      { url: "/favicon.svg?v=4", type: "image/svg+xml" },
-      { url: "/favicon-32x32.png?v=4", type: "image/png", sizes: "32x32" },
-      { url: "/favicon-192x192.png?v=4", type: "image/png", sizes: "192x192" },
-    ],
-    shortcut: ["/favicon.ico?v=4"],
-    apple: [{ url: "/apple-touch-icon.png?v=4", type: "image/png", sizes: "180x180" }],
+    icon: [{ url: "/vaqen-icon.svg?v=5", type: "image/svg+xml" }],
+    shortcut: ["/vaqen-icon.svg?v=5"],
+    apple: [{ url: "/vaqen-icon.svg?v=5", type: "image/svg+xml" }],
   },
 };
 
@@ -31,11 +26,9 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
-        <link rel="icon" href="/favicon.svg?v=4" type="image/svg+xml" />
-        <link rel="icon" href="/favicon-32x32.png?v=4" type="image/png" sizes="32x32" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
-        <link rel="manifest" href="/site.webmanifest?v=4" />
+        <link rel="icon" href="/vaqen-icon.svg?v=5" type="image/svg+xml" />
+        <link rel="shortcut icon" href="/vaqen-icon.svg?v=5" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/vaqen-icon.svg?v=5" />
         <meta name="theme-color" content="#5c46ff" />
         <script
           dangerouslySetInnerHTML={{
@@ -68,6 +61,7 @@ export default function RootLayout({
     </html>
   );
 }
+
 
 
 
