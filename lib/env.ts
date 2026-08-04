@@ -1,4 +1,4 @@
-import { z } from "zod"
+﻿import { z } from "zod"
 
 const serverSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -32,7 +32,7 @@ export function getServerEnv(): ServerEnv {
   const parsed = serverSchema.safeParse(process.env)
   if (!parsed.success) {
     const keys = parsed.error.issues.map((issue) => issue.path.join(".")).join(", ")
-    throw new Error(`Configuração de ambiente inválida: ${keys}`)
+    throw new Error(`ConfiguraÃ§Ã£o de ambiente invÃ¡lida: ${keys}`)
   }
 
   cached = parsed.data
@@ -48,13 +48,18 @@ export function validateProductionEnv() {
     "GOOGLE_CLIENT_SECRET",
     "UPSTASH_REDIS_REST_URL",
     "UPSTASH_REDIS_REST_TOKEN",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+    "STRIPE_PRO_PRICE_ID",
   ] as const
 
   const missing: string[] = required.filter((key) => !env[key])
   const hasEmailProvider = Boolean(env.RESEND_API_KEY || (env.GMAIL_SMTP_USER && env.GMAIL_SMTP_APP_PASSWORD))
   if (!hasEmailProvider) missing.push("RESEND_API_KEY ou GMAIL_SMTP_USER/GMAIL_SMTP_APP_PASSWORD")
   if (missing.length) {
-    throw new Error(`Configuração de produção incompleta: ${missing.join(", ")}`)
+    throw new Error(`ConfiguraÃ§Ã£o de produÃ§Ã£o incompleta: ${missing.join(", ")}`)
   }
   return env
 }
+
+

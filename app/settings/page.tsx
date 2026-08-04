@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 
 import { useConfirm } from "@/components/ConfirmDialog"
@@ -10,7 +10,7 @@ import { usePublicConfig } from "@/hooks/usePublicConfig"
 
 type BillingStatus = {
   proAccess: boolean
-  subscription: { status: string; trialEndsAt: string; cancelAtPeriodEnd: boolean } | null
+  subscription: { status: string; trialEndsAt: string; currentPeriodEnd?: string | null; cancelAtPeriodEnd: boolean; stripeCustomerId?: string | null } | null
   usage: { clients: number; projects: number; tasks: number }
   limits: { client: number; project: number; task: number }
 }
@@ -47,7 +47,7 @@ export default function SettingsPage() {
   async function changePassword() {
     setBusy(true)
     const result = await authClient.changePassword({ currentPassword, newPassword, revokeOtherSessions: true })
-    setMessage(result.error ? result.error.message || "Erro ao alterar senha" : "Senha alterada e outras sessões encerradas.")
+    setMessage(result.error ? result.error.message || "Erro ao alterar senha" : "Senha alterada e outras sessÃµes encerradas.")
     if (!result.error) {
       setCurrentPassword("")
       setNewPassword("")
@@ -60,7 +60,7 @@ export default function SettingsPage() {
     const response = await fetch(`/api/billing/${endpoint}`, { method: "POST" })
     const data = await response.json()
     if (response.ok && data.url) window.location.assign(data.url)
-    else setMessage(data.error?.message || "Cobrança indisponível.")
+    else setMessage(data.error?.message || "CobranÃ§a indisponÃ­vel.")
     setBusy(false)
   }
 
@@ -75,11 +75,11 @@ export default function SettingsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ locale: "pt-BR", timezone }),
     })
-    setMessage(response.ok ? "Preferências atualizadas." : "Não foi possível atualizar as preferências.")
+    setMessage(response.ok ? "PreferÃªncias atualizadas." : "NÃ£o foi possÃ­vel atualizar as preferÃªncias.")
   }
 
   async function deleteAccount() {
-    if (!(await confirmAction({ title: "Excluir conta definitivamente?", description: "Todos os seus dados serão removidos. Esta ação não pode ser desfeita.", confirmLabel: "Excluir conta", variant: "danger" }))) return
+    if (!(await confirmAction({ title: "Excluir conta definitivamente?", description: "Todos os seus dados serÃ£o removidos. Esta aÃ§Ã£o nÃ£o pode ser desfeita.", confirmLabel: "Excluir conta", variant: "danger" }))) return
     const confirmation = window.prompt('Digite exatamente "EXCLUIR MINHA CONTA"')
     if (!confirmation) return
     setBusy(true)
@@ -88,17 +88,17 @@ export default function SettingsPage() {
       headers: { "x-account-delete-confirmation": confirmation },
     })
     if (response.ok) router.replace("/")
-    else setMessage((await response.json()).error?.message || "Não foi possível excluir a conta.")
+    else setMessage((await response.json()).error?.message || "NÃ£o foi possÃ­vel excluir a conta.")
     setBusy(false)
   }
 
-  if (loading) return <main className="p-5 sm:p-8 text-slate-600">Carregando configurações...</main>
+  if (loading) return <main className="p-5 sm:p-8 text-slate-600">Carregando configuraÃ§Ãµes...</main>
   if (!user) return null
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-6 sm:py-10">
-      <h1 className="text-3xl font-bold">Configurações</h1>
-      <p className="mt-2 text-slate-600">Gerencie perfil, segurança, dados e cobrança.</p>
+      <h1 className="text-3xl font-bold">ConfiguraÃ§Ãµes</h1>
+      <p className="mt-2 text-slate-600">Gerencie perfil, seguranÃ§a, dados e cobranÃ§a.</p>
       {message && <p role="status" className="mt-4 rounded-lg bg-slate-100 p-3">{message}</p>}
 
       <div className="mt-8 grid gap-6">
@@ -109,10 +109,10 @@ export default function SettingsPage() {
           <button disabled={busy} onClick={updateProfile} className="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-white disabled:opacity-50">Salvar perfil</button>
         </Section>
 
-        <Section title="Segurança">
+        <Section title="SeguranÃ§a">
           <div className="grid gap-3 sm:grid-cols-2">
             <input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} placeholder="Senha atual" className="rounded-lg border p-2" />
-            <input type="password" minLength={8} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="Nova senha (mínimo 8)" className="rounded-lg border p-2" />
+            <input type="password" minLength={8} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="Nova senha (mÃ­nimo 8)" className="rounded-lg border p-2" />
           </div>
           <button disabled={busy || !currentPassword || newPassword.length < 8} onClick={changePassword} className="mt-4 rounded-lg border px-4 py-2 disabled:opacity-50">Alterar senha</button>
           {googleAuthEnabled && (
@@ -124,33 +124,33 @@ export default function SettingsPage() {
               Vincular Google
             </button>
           )}
-          <h3 className="mt-6 font-semibold">Sessões ativas</h3>
+          <h3 className="mt-6 font-semibold">SessÃµes ativas</h3>
           <div className="mt-2 space-y-2">
             {sessions.map((session) => (
               <div key={session.id} className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 text-sm">
-                <span className="min-w-0 truncate">{session.userAgent || "Dispositivo desconhecido"} · {session.ipAddress || "IP não informado"}</span>
+                <span className="min-w-0 truncate">{session.userAgent || "Dispositivo desconhecido"} Â· {session.ipAddress || "IP nÃ£o informado"}</span>
                 <button onClick={() => revokeSession(session.token)} className="font-semibold text-red-700">Encerrar</button>
               </div>
             ))}
           </div>
         </Section>
 
-        <Section title="Preferências">
-          <label className="block text-sm font-medium">Fuso horário</label>
+        <Section title="PreferÃªncias">
+          <label className="block text-sm font-medium">Fuso horÃ¡rio</label>
           <select value={timezone} onChange={(event) => setTimezone(event.target.value)} className="mt-1 rounded-lg border p-2">
-            <option value="America/Sao_Paulo">Brasília</option>
+            <option value="America/Sao_Paulo">BrasÃ­lia</option>
             <option value="America/Manaus">Manaus</option>
             <option value="America/Recife">Recife</option>
           </select>
-          <button onClick={savePreferences} className="ml-3 rounded-lg border px-4 py-2">Salvar preferências</button>
+          <button onClick={savePreferences} className="ml-3 rounded-lg border px-4 py-2">Salvar preferÃªncias</button>
         </Section>
 
-        <Section title="Plano e cobrança">
+        <Section title="Plano e cobranÃ§a">
           <p className="font-semibold">{billing?.proAccess ? "Pro" : "Gratuito"}</p>
-          {billing && <p className="mt-2 text-sm text-slate-600">Uso: {billing.usage.clients}/{billing.limits.client} clientes · {billing.usage.projects}/{billing.limits.project} projetos · {billing.usage.tasks}/{billing.limits.task} tarefas</p>}
+          {billing && <p className="mt-2 text-sm text-slate-600">Uso: {billing.usage.clients}/{billing.limits.client} clientes Â· {billing.usage.projects}/{billing.limits.project} projetos Â· {billing.usage.tasks}/{billing.limits.task} tarefas</p>}
           <div className="mt-4 flex flex-wrap gap-3">
             {billingEnabled && !billing?.proAccess && <button disabled={busy} onClick={() => openBilling("checkout")} className="rounded-lg bg-indigo-600 px-4 py-2 text-white">Assinar Pro</button>}
-            {billingEnabled && billing?.subscription?.status === "ACTIVE" && <button disabled={busy} onClick={() => openBilling("portal")} className="rounded-lg border px-4 py-2">Gerenciar cobrança</button>}
+            {billingEnabled && billing?.subscription?.stripeCustomerId && <button disabled={busy} onClick={() => openBilling("portal")} className="rounded-lg border px-4 py-2">Gerenciar cobrança</button>}
           </div>
         </Section>
 
@@ -159,7 +159,7 @@ export default function SettingsPage() {
             <a href="/api/account/export" className="rounded-lg border px-4 py-2">Exportar ZIP</a>
             <button disabled={busy} onClick={deleteAccount} className="rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-red-700">Excluir conta</button>
           </div>
-          <p className="mt-3 text-sm text-slate-500">A exclusão cancela a assinatura antes de remover os dados permanentemente.</p>
+          <p className="mt-3 text-sm text-slate-500">A exclusÃ£o cancela a assinatura antes de remover os dados permanentemente.</p>
         </Section>
       </div>
     </main>
@@ -169,3 +169,5 @@ export default function SettingsPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return <section className="rounded-xl border border-slate-200 bg-white p-5 shadow sm:p-6-sm"><h2 className="mb-4 text-xl font-semibold">{title}</h2>{children}</section>
 }
+
+
