@@ -13,10 +13,7 @@ const serverSchema = z.object({
   GMAIL_SMTP_APP_PASSWORD: z.string().min(1).optional(),
   EMAIL_FROM: z.string().min(1).default("Vaqen <no-reply@vaqen.app>"),
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
-  UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
-  STRIPE_SECRET_KEY: z.string().min(1).optional(),
-  STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
-  STRIPE_PRO_PRICE_ID: z.string().min(1).optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
   BETA_INVITE_ONLY: z.enum(["true", "false"]).default("true"),
   LEGAL_TERMS_VERSION: z.string().default("2026-07-01"),
   LEGAL_PRIVACY_VERSION: z.string().default("2026-07-01"),

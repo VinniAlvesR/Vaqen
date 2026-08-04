@@ -6,12 +6,8 @@ export async function GET() {
   return NextResponse.json(
     {
       googleAuthEnabled: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET),
-      emailDeliveryEnabled: Boolean(env.RESEND_API_KEY),
-      billingEnabled: Boolean(
-        env.STRIPE_SECRET_KEY
-        && env.STRIPE_WEBHOOK_SECRET
-        && env.STRIPE_PRO_PRICE_ID
-      ),
+      emailDeliveryEnabled: Boolean(env.RESEND_API_KEY || (env.GMAIL_SMTP_USER && env.GMAIL_SMTP_APP_PASSWORD)),
+      billingEnabled: false,
     },
     {
       headers: {

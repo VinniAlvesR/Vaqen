@@ -1,6 +1,5 @@
 "use client"
 
-
 import { useConfirm } from "@/components/ConfirmDialog"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -8,30 +7,22 @@ import { authClient } from "@/lib/auth-client"
 import { useAuth } from "@/hooks/useAuth"
 import { usePublicConfig } from "@/hooks/usePublicConfig"
 
-type BillingStatus = {
-  proAccess: boolean
-  subscription: { status: string; trialEndsAt: string; cancelAtPeriodEnd: boolean } | null
-  usage: { clients: number; projects: number; tasks: number }
-  limits: { client: number; project: number; task: number }
-}
 type DeviceSession = { id: string; token: string; userAgent?: string | null; ipAddress?: string | null; createdAt: Date | string }
 
 export default function SettingsPage() {
   const confirmAction = useConfirm()
   const router = useRouter()
   const { user, loading, checkAuth } = useAuth()
-  const { googleAuthEnabled, billingEnabled } = usePublicConfig()
+  const { googleAuthEnabled } = usePublicConfig()
   const [name, setName] = useState<string | null>(null)
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
-  const [billing, setBilling] = useState<BillingStatus | null>(null)
   const [sessions, setSessions] = useState<DeviceSession[]>([])
   const [timezone, setTimezone] = useState("America/Sao_Paulo")
   const [message, setMessage] = useState("")
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
-    fetch("/api/billing/status").then((response) => response.ok ? response.json() : null).then(setBilling)
     fetch("/api/account/preferences").then((response) => response.ok ? response.json() : null).then((data) => data?.timezone && setTimezone(data.timezone))
     authClient.listSessions().then((result) => setSessions((result.data ?? []) as DeviceSession[]))
   }, [])
@@ -52,15 +43,6 @@ export default function SettingsPage() {
       setCurrentPassword("")
       setNewPassword("")
     }
-    setBusy(false)
-  }
-
-  async function openBilling(endpoint: "checkout" | "portal") {
-    setBusy(true)
-    const response = await fetch(`/api/billing/${endpoint}`, { method: "POST" })
-    const data = await response.json()
-    if (response.ok && data.url) window.location.assign(data.url)
-    else setMessage(data.error?.message || "Cobrança indisponível.")
     setBusy(false)
   }
 
@@ -98,7 +80,7 @@ export default function SettingsPage() {
   return (
     <main className="mx-auto max-w-4xl px-4 py-6 sm:py-10">
       <h1 className="text-3xl font-bold">Configurações</h1>
-      <p className="mt-2 text-slate-600">Gerencie perfil, segurança, dados e cobrança.</p>
+      <p className="mt-2 text-slate-600">Gerencie perfil, segurança, preferências e dados da conta.</p>
       {message && <p role="status" className="mt-4 rounded-lg bg-slate-100 p-3">{message}</p>}
 
       <div className="mt-8 grid gap-6">
@@ -145,21 +127,12 @@ export default function SettingsPage() {
           <button onClick={savePreferences} className="ml-3 rounded-lg border px-4 py-2">Salvar preferências</button>
         </Section>
 
-        <Section title="Plano e cobrança">
-          <p className="font-semibold">{billing?.proAccess ? "Pro" : "Gratuito"}</p>
-          {billing && <p className="mt-2 text-sm text-slate-600">Uso: {billing.usage.clients}/{billing.limits.client} clientes · {billing.usage.projects}/{billing.limits.project} projetos · {billing.usage.tasks}/{billing.limits.task} tarefas</p>}
-          <div className="mt-4 flex flex-wrap gap-3">
-            {billingEnabled && !billing?.proAccess && <button disabled={busy} onClick={() => openBilling("checkout")} className="rounded-lg bg-indigo-600 px-4 py-2 text-white">Assinar Pro</button>}
-            {billingEnabled && billing?.subscription?.status === "ACTIVE" && <button disabled={busy} onClick={() => openBilling("portal")} className="rounded-lg border px-4 py-2">Gerenciar cobrança</button>}
-          </div>
-        </Section>
-
         <Section title="Seus dados">
           <div className="flex flex-wrap gap-3">
             <a href="/api/account/export" className="rounded-lg border px-4 py-2">Exportar ZIP</a>
             <button disabled={busy} onClick={deleteAccount} className="rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-red-700">Excluir conta</button>
           </div>
-          <p className="mt-3 text-sm text-slate-500">A exclusão cancela a assinatura antes de remover os dados permanentemente.</p>
+          <p className="mt-3 text-sm text-slate-500">A exclusão remove os dados da sua conta permanentemente.</p>
         </Section>
       </div>
     </main>

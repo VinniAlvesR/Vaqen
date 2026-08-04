@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getUserIdFromRequest } from "@/services/auth"
 import { prisma } from "@/lib/prisma"
-import { getStripe } from "@/lib/stripe"
 import { unauthorized } from "@/lib/api"
 
 export async function DELETE(request: NextRequest) {
@@ -15,10 +14,6 @@ export async function DELETE(request: NextRequest) {
     )
   }
 
-  const subscription = await prisma.subscription.findUnique({ where: { userId } })
-  if (subscription?.stripeSubscriptionId && subscription.status !== "CANCELED") {
-    await getStripe().subscriptions.cancel(subscription.stripeSubscriptionId)
-  }
   await prisma.user.delete({ where: { id: userId } })
 
   const response = NextResponse.json({ success: true })

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import Link from "next/link"
 import Image from "next/image"
@@ -153,7 +153,6 @@ export default function Navbar() {
                     <Icon name="activity" />
                     Feedback
                   </FeedbackTrigger>
-                  <MobileAction href="/settings" icon="billing" onNavigate={() => { setMobileOpen(false); setMobileAccountOpen(false) }}>Pagamentos</MobileAction>
                   <MobileAction href="/terms" icon="billing" onNavigate={() => { setMobileOpen(false); setMobileAccountOpen(false) }}>Termos de Uso</MobileAction>
                   <MobileAction href="/privacy" icon="user" onNavigate={() => { setMobileOpen(false); setMobileAccountOpen(false) }}>Politica de Privacidade</MobileAction>
                   <MobileAction href="/about" icon="info" onNavigate={() => { setMobileOpen(false); setMobileAccountOpen(false) }}>Sobre</MobileAction>
@@ -309,8 +308,7 @@ function AccountCard({ name, email, theme, onToggleTheme, onLogout, onNavigate }
 
       <div className="mt-2 space-y-1 border-t border-slate-100 pt-2">
         <AccountLink href="/settings" icon="user" onClick={onNavigate}>Perfil</AccountLink>
-        <AccountLink href="/settings" icon="settings" onClick={onNavigate}>Configuracoes</AccountLink>
-        <AccountLink href="/settings" icon="billing" onClick={onNavigate}>Plano e cobranca</AccountLink>
+        <AccountLink href="/settings" icon="settings" onClick={onNavigate}>Configuracoes</AccountLink>
         <FeedbackTrigger onOpen={onNavigate} className="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
           <Icon name="activity" />
           Enviar feedback
@@ -507,5 +505,6 @@ function ChevronIcon({ direction }: { direction: "left" | "right" }) {
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
+
 
 
