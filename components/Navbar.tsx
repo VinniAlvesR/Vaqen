@@ -166,6 +166,16 @@ export default function Navbar() {
                       <span className={`h-4 w-4 rounded-full bg-white transition ${theme === "dark" ? "translate-x-5" : ""}`} />
                     </span>
                   </button>
+                  <div className="mt-2 border-t border-slate-200 pt-2 dark:border-slate-800">
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30"
+                    >
+                      <Icon name="logout" />
+                      Sair
+                    </button>
+                  </div>
                 </div>
               ) : null}
 
