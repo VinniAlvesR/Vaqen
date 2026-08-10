@@ -4,7 +4,6 @@ import Stripe from "stripe"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { getStripe } from "@/lib/stripe"
-import { getServerEnv } from "@/lib/env"
 import type { SubscriptionStatus } from "@/generated/prisma/enums"
 
 export const dynamic = "force-dynamic"
@@ -35,7 +34,7 @@ export default async function BillingSuccessPage({ searchParams }: PageProps) {
   const session = await auth.api.getSession({ headers: await headers() })
   const result = session?.user.id
     ? await syncCheckoutSession({ sessionId, userId: session.user.id, userEmail: session.user.email })
-    : { status: "error", message: "Faca login novamente para confirmar sua assinatura." } satisfies SyncResult
+    : { status: "error", message: "Faça login novamente para confirmar sua assinatura." } satisfies SyncResult
 
   const synced = result.status === "synced"
 
@@ -54,8 +53,8 @@ export default async function BillingSuccessPage({ searchParams }: PageProps) {
             </p>
             <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm leading-6 text-emerald-100">
               <p>Status: {formatStatus(result.subscriptionStatus)}</p>
-              {result.trialEndsAt ? <p>Trial ate: {formatDate(result.trialEndsAt)}</p> : null}
-              {result.currentPeriodEnd ? <p>Periodo atual ate: {formatDate(result.currentPeriodEnd)}</p> : null}
+              {result.trialEndsAt ? <p>Trial até: {formatDate(result.trialEndsAt)}</p> : null}
+              {result.currentPeriodEnd ? <p>Período atual até: {formatDate(result.currentPeriodEnd)}</p> : null}
             </div>
           </div>
         ) : (
@@ -68,7 +67,7 @@ export default async function BillingSuccessPage({ searchParams }: PageProps) {
         )}
 
         <p className="mt-5 rounded-2xl border border-white/10 bg-slate-950/50 p-4 text-sm leading-6 text-slate-300">
-          Dados de cartao sao processados pela Stripe. O Vaqen recebe apenas dados minimos para vincular a assinatura a sua conta, como identificadores da assinatura, status e periodo.
+          Dados de cartão são processados pela Stripe. O Vaqen recebe apenas dados mínimos para vincular a assinatura à sua conta, como identificadores da assinatura, status e período.
         </p>
 
         <div className="mt-8 flex flex-wrap gap-3">
@@ -85,8 +84,6 @@ export default async function BillingSuccessPage({ searchParams }: PageProps) {
 }
 
 async function syncCheckoutSession({ sessionId, userId, userEmail }: { sessionId?: string; userId: string; userEmail: string }): Promise<SyncResult> {
-  const env = getServerEnv()
-  if (!env.STRIPE_SECRET_KEY) return { status: "error", message: "Stripe nao configurada no servidor local." }
 
   if (!sessionId) {
     return syncLatestSubscriptionByEmail({ userId, userEmail })
@@ -102,11 +99,11 @@ async function syncCheckoutSession({ sessionId, userId, userEmail }: { sessionId
     const belongsToUser = referencedUserId === userId || normalizeEmail(checkoutEmail) === normalizeEmail(userEmail)
 
     if (!belongsToUser) {
-      return { status: "error", message: "A sessao de pagamento nao pertence ao usuario logado." }
+      return { status: "error", message: "A sessão de pagamento não pertence ao usuário logado." }
     }
 
     if (checkout.mode !== "subscription" || !checkout.subscription) {
-      return { status: "pending", message: "Checkout localizado, mas a assinatura ainda nao foi criada pela Stripe." }
+      return { status: "pending", message: "Checkout localizado, mas a assinatura ainda não foi criada pela Stripe." }
     }
 
     const stripeSubscription = typeof checkout.subscription === "string"

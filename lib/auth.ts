@@ -12,10 +12,45 @@ const googleEnabled = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET)
 const emailProviderEnabled = Boolean(env.RESEND_API_KEY || (env.GMAIL_SMTP_USER && env.GMAIL_SMTP_APP_PASSWORD))
 const emailVerificationRequired = env.NODE_ENV === "production" || emailProviderEnabled
 
+function getTrustedOrigins(baseUrl: string, extraOrigins?: string) {
+  const origins = new Set<string>()
+  addOrigin(origins, baseUrl)
+
+  try {
+    const url = new URL(baseUrl)
+    if (url.hostname.startsWith("www.")) {
+      addOrigin(origins, url.protocol + "//" + url.hostname.slice(4))
+    } else {
+      addOrigin(origins, url.protocol + "//www." + url.hostname)
+    }
+  } catch {
+    // getServerEnv already validates baseUrl. Keep auth boot resilient.
+  }
+
+  if (process.env.VERCEL_URL) addOrigin(origins, "https://" + process.env.VERCEL_URL)
+
+  for (const origin of extraOrigins?.split(",") ?? []) {
+    addOrigin(origins, origin)
+  }
+
+  return [...origins]
+}
+
+function addOrigin(origins: Set<string>, value: string | undefined) {
+  const clean = value?.trim()
+  if (!clean) return
+  try {
+    origins.add(new URL(clean).origin)
+  } catch {
+    // Ignore invalid optional trusted origin entries.
+  }
+}
+
 export const auth = betterAuth({
   appName: "Vaqen",
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
+  trustedOrigins: getTrustedOrigins(env.BETTER_AUTH_URL, env.BETTER_AUTH_TRUSTED_ORIGINS),
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   emailAndPassword: {
     enabled: true,

@@ -88,6 +88,7 @@ describe("hardening de seguranca", () => {
       "app/api/health/route.ts",
       "app/api/billing/webhook/route.ts",
       "app/api/notifications/cron/route.ts",
+      "app/api/trash/cron/route.ts",
     ])
 
     const unprotected = []
@@ -105,12 +106,15 @@ describe("hardening de seguranca", () => {
   it("rotas públicas especiais usam validação compatível com o risco", () => {
     const webhook = readFileSync("app/api/billing/webhook/route.ts", "utf8")
     const cron = readFileSync("app/api/notifications/cron/route.ts", "utf8")
+    const trashCron = readFileSync("app/api/trash/cron/route.ts", "utf8")
     const config = readFileSync("app/api/config/route.ts", "utf8")
 
     expect(webhook).toContain("constructEvent")
     expect(webhook).toContain("STRIPE_WEBHOOK_SECRET")
     expect(cron).toContain("CRON_SECRET")
     expect(cron).toContain("authorization")
+    expect(trashCron).toContain("CRON_SECRET")
+    expect(trashCron).toContain("authorization")
     expect(config).not.toContain("GOOGLE_CLIENT_SECRET:")
     expect(config).not.toContain("STRIPE_SECRET_KEY:")
     expect(config).not.toContain("VAPID_PRIVATE_KEY:")

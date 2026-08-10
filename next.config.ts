@@ -4,13 +4,14 @@ import { withSentryConfig } from "@sentry/nextjs"
 const isProduction = process.env.NODE_ENV === "production"
 const billingEnabled = Boolean(process.env.STRIPE_SECRET_KEY || process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_URL)
 
-const scriptSrc = ["'self'", "'unsafe-inline'", ...(isProduction ? [] : ["'unsafe-eval'"])]
+const scriptSrc = ["'self'", "'unsafe-inline'", "https://vercel.live", ...(isProduction ? [] : ["'unsafe-eval'"])]
 const connectSrc = [
   "'self'",
   "https://*.googleapis.com",
   "https://*.gstatic.com",
   "https://accounts.google.com",
   "https://*.vercel-insights.com",
+  "https://vercel.live",
   "https://*.vercel-storage.com",
   "https://*.blob.vercel-storage.com",
   "https://*.neon.tech",
