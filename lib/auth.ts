@@ -119,13 +119,11 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (user) => {
-          const trialEndsAt = new Date()
-          trialEndsAt.setUTCDate(trialEndsAt.getUTCDate() + 30)
           await prisma.$transaction([
             prisma.subscription.upsert({
               where: { userId: user.id },
               update: {},
-              create: { userId: user.id, trialEndsAt },
+              create: { userId: user.id, plan: "FREE", status: "INCOMPLETE", trialEndsAt: new Date() },
             }),
             prisma.userPreference.upsert({
               where: { userId: user.id },

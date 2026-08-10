@@ -4,10 +4,12 @@
 import { useConfirm } from "@/components/ConfirmDialog"
 import { useCallback, useEffect, useState } from "react"
 import ClientCard from "@/components/ClientCard"
+import { useAuth } from "@/hooks/useAuth"
 import { Client } from "@/types/client"
 
 export default function ClientsPage() {
   const confirmAction = useConfirm()
+  const { loading: authLoading, isAuthenticated } = useAuth()
   const [clients, setClients] = useState<Client[]>([])
   const [search, setSearch] = useState("")
   const [lifecycle, setLifecycle] = useState<"active" | "archived" | "all">("active")
@@ -27,6 +29,12 @@ export default function ClientsPage() {
   }, [])
 
   const fetchClients = useCallback(async () => {
+    if (authLoading) return
+    if (!isAuthenticated) {
+      setLoading(false)
+      return
+    }
+
     try {
       setError(null)
       const params = new URLSearchParams()
@@ -35,7 +43,10 @@ export default function ClientsPage() {
       params.set("lifecycle", editId ? "all" : lifecycle)
       const response = await fetch(`/api/clients${params.toString() ? `?${params.toString()}` : ""}`)
 
-      if (!response.ok) throw new Error("Falha ao buscar clientes")
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error?.message || "Falha ao buscar clientes")
+      }
 
       const data: Client[] = await response.json()
       setClients(data)
@@ -55,7 +66,7 @@ export default function ClientsPage() {
     } finally {
       setLoading(false)
     }
-  }, [lifecycle, search])
+  }, [authLoading, isAuthenticated, lifecycle, search])
 
   useEffect(() => {
     fetchClients()
@@ -85,7 +96,10 @@ export default function ClientsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ archived }),
       })
-      if (!response.ok) throw new Error("Não foi possível alterar o cliente")
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error?.message || "Não foi possível alterar o cliente")
+      }
       await fetchClients()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro desconhecido")
@@ -108,7 +122,10 @@ export default function ClientsPage() {
         body: JSON.stringify({ name, email, phone, company }),
       })
 
-      if (!response.ok) throw new Error("Erro ao criar cliente")
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error?.message || "Erro ao criar cliente")
+      }
 
       resetForm()
       setShowForm(false)
@@ -132,7 +149,10 @@ export default function ClientsPage() {
         body: JSON.stringify({ id }),
       })
 
-      if (!response.ok) throw new Error("Erro ao mover cliente para a lixeira")
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error?.message || "Erro ao mover cliente para a lixeira")
+      }
 
       setClients((prev) => prev.filter((client) => client.id !== id))
       setError(null)
@@ -171,7 +191,10 @@ export default function ClientsPage() {
         body: JSON.stringify({ id: editingClient.id, name, email, phone, company }),
       })
 
-      if (!response.ok) throw new Error("Erro ao atualizar cliente")
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error?.message || "Erro ao atualizar cliente")
+      }
 
       resetForm()
       setShowForm(false)

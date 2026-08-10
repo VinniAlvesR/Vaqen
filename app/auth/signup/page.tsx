@@ -5,16 +5,17 @@ import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
+import { usePublicConfig } from "@/hooks/usePublicConfig"
 
 export default function SignupPage() {
   const router = useRouter()
-  const { signup, user, loading: authLoading } = useAuth()
+  const { signup, loginWithGoogle, user, loading: authLoading } = useAuth()
+  const { googleAuthEnabled } = usePublicConfig()
 
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-  const [inviteCode, setInviteCode] = useState("")
   const [legalAccepted, setLegalAccepted] = useState(false)
   const [marketingConsent, setMarketingConsent] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -22,7 +23,7 @@ export default function SignupPage() {
   const [signupCompleted, setSignupCompleted] = useState(false)
 
   useEffect(() => {
-    if (user && !signupCompleted) router.replace("/dashboard")
+    if (user && !signupCompleted) router.replace("/today")
   }, [router, user, signupCompleted])
 
   async function handleSignup(e: React.FormEvent) {
@@ -33,7 +34,7 @@ export default function SignupPage() {
     try {
       const normalizedEmail = email.trim().toLowerCase()
       setSignupCompleted(true)
-      await signup(name, normalizedEmail, password, confirmPassword, inviteCode, legalAccepted, marketingConsent)
+      await signup(name, normalizedEmail, password, confirmPassword, legalAccepted, marketingConsent)
       router.replace(`/auth/verify-email?email=${encodeURIComponent(normalizedEmail)}`)
     } catch (err) {
       setSignupCompleted(false)
@@ -58,9 +59,9 @@ export default function SignupPage() {
         <section className="hidden lg:block">
           <Link href="/" className="flex items-center gap-3 text-lg font-black text-white">
             <Image src="/vaqen-icon.svg" alt="" width={38} height={38} className="rounded-xl" priority />
-            <span>Vaqen Beta</span>
+            <span>Vaqen</span>
           </Link>
-          <p className="mt-6 text-sm font-bold uppercase tracking-[0.24em] text-indigo-300">Acesso Beta</p>
+          <p className="mt-6 text-sm font-bold uppercase tracking-[0.24em] text-indigo-300">Acesso</p>
           <h1 className="mt-4 text-5xl font-black tracking-tight">
             Crie sua central de trabalho em poucos minutos.
           </h1>
@@ -80,24 +81,19 @@ export default function SignupPage() {
           <div className="mb-6">
             <Link href="/" className="flex items-center gap-3 text-lg font-black text-white lg:hidden">
               <Image src="/vaqen-icon.svg" alt="" width={38} height={38} className="rounded-xl" priority />
-              <span>Vaqen Beta</span>
+              <span>Vaqen</span>
             </Link>
             <p className="mt-6 text-sm font-bold uppercase tracking-[0.22em] text-indigo-300 lg:mt-0">Cadastro</p>
             <h1 className="mt-3 text-3xl font-black">Criar conta</h1>
-            <p className="mt-2 text-slate-300">Entre no Beta e organize seus projetos com mais clareza.</p>
+            <p className="mt-2 text-slate-300">Organize seus projetos com mais clareza.</p>
           </div>
 
           {error ? <div className="mb-5 rounded-2xl border border-red-400/30 bg-red-500/10 p-3 text-sm font-semibold text-red-200">{error}</div> : null}
 
           <form onSubmit={handleSignup} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Código do convite">
-                <input value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} disabled={loading} required className={inputClass} placeholder="Convite Beta" />
-              </Field>
-              <Field label="Nome">
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} disabled={loading} required className={inputClass} placeholder="Seu nome" />
-              </Field>
-            </div>
+            <Field label="Nome">
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} disabled={loading} required className={inputClass} placeholder="Seu nome" />
+            </Field>
 
             <Field label="Email">
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} required className={inputClass} placeholder="seu@email.com" />
@@ -130,6 +126,11 @@ export default function SignupPage() {
               {loading ? "Criando conta..." : "Criar conta"}
             </button>
           </form>
+          {googleAuthEnabled ? (
+            <button type="button" onClick={() => loginWithGoogle()} disabled={loading || !legalAccepted} className="mt-3 w-full rounded-full border border-white/15 bg-white/10 py-3 font-bold text-white transition hover:bg-white/15 disabled:opacity-50">
+              Registrar com Google
+            </button>
+          ) : null}
 
           <p className="mt-6 text-center text-sm text-slate-300">
             Já tem conta?{" "}

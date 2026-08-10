@@ -4,15 +4,39 @@ import { getUserIdFromRequest } from "@/services/auth"
 import { prisma } from "@/lib/prisma"
 import { toCsv } from "@/lib/csv"
 import { unauthorized } from "@/lib/api"
+import { enforceRateLimit } from "@/lib/rate-limit"
 
 export async function GET(request: NextRequest) {
   const userId = await getUserIdFromRequest(request)
   if (!userId) return unauthorized()
 
+  const limited = await enforceRateLimit(request, "export", userId)
+  if (limited) return limited
+
   const [user, clients, projects, tasks, checklist, subtasks, comments, activities, consents] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: userId },
-      select: { id: true, name: true, email: true, emailVerified: true, createdAt: true, updatedAt: true, preferences: true, subscription: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        emailVerified: true,
+        createdAt: true,
+        updatedAt: true,
+        preferences: true,
+        subscription: {
+          select: {
+            plan: true,
+            status: true,
+            trialEndsAt: true,
+            currentPeriodStart: true,
+            currentPeriodEnd: true,
+            cancelAtPeriodEnd: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
     }),
     prisma.client.findMany({ where: { userId } }),
     prisma.project.findMany({ where: { userId } }),
@@ -36,6 +60,7 @@ export async function GET(request: NextRequest) {
       "Content-Type": "application/zip",
       "Content-Disposition": `attachment; filename="vaqen-export-${new Date().toISOString().slice(0, 10)}.zip"`,
       "Cache-Control": "private, no-store",
+      "X-Content-Type-Options": "nosniff",
     },
   })
 }

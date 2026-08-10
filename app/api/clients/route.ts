@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { apiError, unauthorized } from "@/lib/api"
-import { assertCanCreate } from "@/lib/plans"
+import { assertCanCreate, recordPlanCreation } from "@/lib/plans"
 import { getUserIdFromRequest } from "@/services/auth"
 import { logActivity } from "@/services/activity"
 
@@ -17,28 +17,32 @@ export async function GET(request: NextRequest) {
   const userId = await getUserIdFromRequest(request)
   if (!userId) return unauthorized()
 
-  const search = request.nextUrl.searchParams.get("q")?.trim()
-  const lifecycle = request.nextUrl.searchParams.get("lifecycle") ?? "active"
-  const showDeleted = request.nextUrl.searchParams.get("showDeleted") === "true"
+  try {
+    const search = request.nextUrl.searchParams.get("q")?.trim()
+    const lifecycle = request.nextUrl.searchParams.get("lifecycle") ?? "active"
+    const showDeleted = request.nextUrl.searchParams.get("showDeleted") === "true"
 
-  const clients = await prisma.client.findMany({
-    where: {
-      userId,
-      ...(showDeleted ? {} : { deletedAt: null }),
-      ...(lifecycle === "archived"
-        ? { archivedAt: { not: null } }
-        : lifecycle === "active" ? { archivedAt: null } : {}),
-      ...(search ? {
-        OR: [
-          { name: { contains: search, mode: "insensitive" } },
-          { email: { contains: search, mode: "insensitive" } },
-          { company: { contains: search, mode: "insensitive" } },
-        ],
-      } : {}),
-    },
-    orderBy: { createdAt: "desc" },
-  })
-  return NextResponse.json(clients)
+    const clients = await prisma.client.findMany({
+      where: {
+        userId,
+        ...(showDeleted ? {} : { deletedAt: null }),
+        ...(lifecycle === "archived"
+          ? { archivedAt: { not: null } }
+          : lifecycle === "active" ? { archivedAt: null } : {}),
+        ...(search ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
+            { company: { contains: search, mode: "insensitive" } },
+          ],
+        } : {}),
+      },
+      orderBy: { createdAt: "desc" },
+    })
+    return NextResponse.json(clients)
+  } catch (cause) {
+    return apiError(cause, "Não foi possível buscar clientes")
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -46,15 +50,20 @@ export async function POST(request: NextRequest) {
   if (!userId) return unauthorized()
   try {
     const input = clientInput.parse(await request.json())
-    await assertCanCreate(userId, "client")
-    const client = await prisma.client.create({ data: { ...input, userId } })
+    const client = await prisma.$transaction(async (tx) => {
+      const subscription = await tx.subscription.findUnique({ where: { userId } })
+      await assertCanCreate(userId, "client", tx, subscription)
+      const created = await tx.client.create({ data: { ...input, userId } })
+      await recordPlanCreation(userId, "client", tx, subscription)
+      return created
+    })
     await logActivity(userId, "client", client.id, "created", `Cliente ${client.name} criado`)
     return NextResponse.json(client, { status: 201 })
   } catch (cause) {
     if (cause instanceof z.ZodError) {
       return NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "Dados do cliente inválidos" } }, { status: 400 })
     }
-    return apiError(cause, "Não foi possível criar o cliente")
+    return apiError(cause, "Não foi possível buscar clientes")
   }
 }
 
@@ -64,7 +73,7 @@ export async function PUT(request: NextRequest) {
   const body = await request.json()
   const parsed = clientInput.safeParse(body)
   if (!parsed.success || typeof body.id !== "string") {
-    return NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "Dados do cliente inválidos" } }, { status: 400 })
+      return NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "Dados do cliente inválidos" } }, { status: 400 })
   }
 
   const updated = await prisma.client.updateMany({

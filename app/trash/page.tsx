@@ -10,7 +10,16 @@ interface TrashItem {
   name: string
   type: string
   deletedAt: string
+  expiresAt?: string | null
+  daysRemaining?: number
   parentName?: string | null
+}
+
+function formatRetentionText(daysRemaining?: number) {
+  if (typeof daysRemaining !== "number") return "Exclusão definitiva em até 30 dias"
+  if (daysRemaining <= 0) return "Exclusão definitiva pendente"
+  if (daysRemaining === 1) return "1 dia restante para Exclusão definitiva"
+  return `${daysRemaining} dias restantes para Exclusão definitiva`
 }
 
 export default function TrashPage() {
@@ -21,6 +30,7 @@ export default function TrashPage() {
   const [notice, setNotice] = useState<{ type: "success" | "error"; message: string } | null>(null)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(false)
+  const [retentionDays, setRetentionDays] = useState(30)
   const [selectedFilter, setSelectedFilter] = useState<string>("all")
   const [restoring, setRestoring] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -36,6 +46,7 @@ export default function TrashPage() {
       const data = await res.json()
       setItems(data.items)
       setHasMore(data.hasMore)
+      setRetentionDays(data.retentionDays ?? 30)
       setPage(pageNum)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar lixeira")
@@ -90,27 +101,7 @@ export default function TrashPage() {
       setDeleting(null)
     }
   }
-  const handleClearAll = async () => {
-    if (!(await confirmAction({
-      title: "Limpar histórico?",
-      description: "Todas as atividades da lixeira serão removidas definitivamente. Esta ação não pode ser desfeita.",
-      confirmLabel: "Limpar",
-      variant: "danger",
-    }))) return
 
-    try {
-      const res = await fetch("/api/activity", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clearAll: true }),
-      })
-
-      if (!res.ok) throw new Error("Erro ao limpar histórico")
-      setNotice({ type: "success", message: "Histórico de atividades limpo com sucesso." })
-    } catch (err) {
-      setNotice({ type: "error", message: err instanceof Error ? err.message : "Erro ao limpar histórico" })
-    }
-  }
   const getTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
       client: "Cliente",
@@ -133,7 +124,7 @@ export default function TrashPage() {
     <main className="vaqen-trash-page min-h-screen bg-slate-50 px-4 py-5 sm:py-6 text-slate-950 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <div className="mb-8">
-          <Link href="/dashboard" className="mb-4 inline-block text-sm font-semibold text-indigo-600 transition hover:text-indigo-700">Voltar</Link>
+          <Link href="/today" className="mb-4 inline-block text-sm font-semibold text-indigo-600 transition hover:text-indigo-700">Voltar</Link>
 
           <section className="rounded-[2rem] border border-slate-200 bg-white p-5 sm:p-8 shadow-sm">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
@@ -141,13 +132,8 @@ export default function TrashPage() {
                 <p className="text-sm font-semibold uppercase tracking-[0.22em] text-indigo-600">Sistema</p>
                 <h1 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-slate-950">Lixeira</h1>
                 <p className="mt-2 text-slate-600">Visualize e restaure itens excluídos.</p>
+                <p className="mt-3 max-w-2xl rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">Itens na lixeira são apagados definitivamente após {retentionDays} dias.</p>
               </div>
-              <button
-                onClick={handleClearAll}
-                className="w-fit rounded-full bg-red-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700"
-              >
-Limpar histórico
-              </button>
             </div>
           </section>
         </div>
@@ -203,6 +189,9 @@ Limpar histórico
                       {item.parentName ? <p className="text-sm text-slate-600">{item.parentName}</p> : null}
                       <p className="mt-2 text-xs text-slate-500">
                         Deletado: {new Date(item.deletedAt).toLocaleString("pt-BR")}
+                      </p>
+                      <p className="mt-1 text-xs font-semibold text-amber-700 dark:text-amber-300">
+                        {formatRetentionText(item.daysRemaining)}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">

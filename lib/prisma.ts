@@ -11,7 +11,18 @@ function createPrismaClient() {
   return new PrismaClient({ adapter })
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient()
+function isStaleClient(client: PrismaClient | undefined) {
+  if (!client) return true
+  const maybeClient = client as PrismaClient & {
+    checklistTemplate?: unknown
+    projectTemplate?: unknown
+    recurringTask?: unknown
+    notification?: unknown
+  }
+  return !maybeClient.checklistTemplate || !maybeClient.projectTemplate || !maybeClient.recurringTask || !maybeClient.notification
+}
+
+export const prisma = isStaleClient(globalForPrisma.prisma) ? createPrismaClient() : globalForPrisma.prisma!
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma

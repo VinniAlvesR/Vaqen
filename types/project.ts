@@ -8,6 +8,9 @@ export type Project = {
   startDate: string
   dueDate?: string | null
   description: string
+  projectValueCents?: number | null
+  commercialStatus?: string | null
+  internalNotes?: string | null
   completedAt?: string | null
   archivedAt?: string | null
 }

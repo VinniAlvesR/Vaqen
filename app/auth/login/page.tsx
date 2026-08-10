@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (user) router.replace("/dashboard")
+    if (user) router.replace("/today")
   }, [router, user])
 
   async function handleLogin(e: React.FormEvent) {
@@ -28,7 +28,7 @@ export default function LoginPage() {
 
     try {
       await login(email, password)
-      router.replace("/dashboard")
+      router.replace("/today")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao fazer login")
     } finally {
@@ -51,7 +51,7 @@ export default function LoginPage() {
         <section className="hidden lg:block">
           <Link href="/" className="flex items-center gap-3 text-lg font-black text-white">
             <Image src="/vaqen-icon.svg" alt="" width={38} height={38} className="rounded-xl" priority />
-            <span>Vaqen Beta</span>
+            <span>Vaqen</span>
           </Link>
           <p className="mt-6 text-sm font-bold uppercase tracking-[0.24em] text-indigo-300">Bem-vindo de volta</p>
           <h1 className="mt-4 text-5xl font-black tracking-tight">
@@ -66,7 +66,7 @@ export default function LoginPage() {
           <div className="mb-8">
             <Link href="/" className="flex items-center gap-3 text-lg font-black text-white lg:hidden">
               <Image src="/vaqen-icon.svg" alt="" width={38} height={38} className="rounded-xl" priority />
-              <span>Vaqen Beta</span>
+              <span>Vaqen</span>
             </Link>
             <p className="mt-6 text-sm font-bold uppercase tracking-[0.22em] text-indigo-300 lg:mt-0">Login</p>
             <h1 className="mt-3 text-3xl font-black">Acesse sua conta</h1>

@@ -43,7 +43,7 @@ export default function ClientDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ archived: !client.archivedAt }),
       })
-      if (!response.ok) throw new Error("Nao foi possivel alterar o cliente")
+      if (!response.ok) throw new Error("Não foi possível alterar o cliente")
       const result = await response.json()
       setClient({ ...client, archivedAt: result.archivedAt })
     } catch (err) {
@@ -57,7 +57,7 @@ export default function ClientDetailPage() {
         const res = await fetch(`/api/clients/${params.id}`)
         if (!res.ok) {
           const body = await res.json().catch(() => null)
-          throw new Error(body?.error ?? "Nao foi possivel carregar o cliente")
+          throw new Error(body?.error ?? "Não foi possível carregar o cliente")
         }
         const data = await res.json()
         setClient(data)
@@ -116,6 +116,10 @@ export default function ClientDetailPage() {
               <div className="flex flex-wrap gap-2">
                 <Link href={`/clients?edit=${client.id}`} className="rounded-lg bg-amber-500 px-4 py-2 font-semibold text-white hover:bg-amber-600">Editar</Link>
                 <a href="#client-projects" className="rounded-lg border border-indigo-200 px-4 py-2 font-semibold text-indigo-700 hover:bg-indigo-50">Ver projetos</a>
+                <a href={`/api/reports?type=client&id=${client.id}&format=pdf`} className="rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">PDF</a>
+                <a href={`/api/reports?type=client&id=${client.id}&format=csv`} className="rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">CSV</a>
+                <a href={`/api/reports?type=client&id=${client.id}&format=pdf`} className="rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">PDF</a>
+                <a href={`/api/reports?type=client&id=${client.id}&format=csv`} className="rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">CSV</a>
                 <button onClick={toggleArchive} className="rounded-lg bg-slate-800 px-4 py-2 font-semibold text-white hover:bg-slate-900">
                   {client.archivedAt ? "Reativar cliente" : "Arquivar cliente"}
                 </button>
@@ -143,7 +147,7 @@ export default function ClientDetailPage() {
               )}
               {client.address && (
                 <div>
-                  <p className="text-gray-600 dark:text-slate-300 font-medium">Endereco</p>
+                  <p className="text-gray-600 dark:text-slate-300 font-medium">Endereço</p>
                   <p className="text-gray-900 dark:text-white">{client.address}</p>
                 </div>
               )}
@@ -162,7 +166,7 @@ export default function ClientDetailPage() {
             <p className="text-3xl font-bold sm:text-4xl text-indigo-600 mt-2">{client.summary.activeProjects}</p>
           </div>
           <div className="bg-white dark:bg-slate-900 rounded-lg shadow-lg p-6">
-            <p className="text-gray-600 dark:text-slate-300 font-medium text-sm">Projetos concluidos</p>
+            <p className="text-gray-600 dark:text-slate-300 font-medium text-sm">Projetos concluídos</p>
             <p className="text-3xl font-bold sm:text-4xl text-emerald-600 mt-2">{client.summary.completedProjects}</p>
           </div>
           <div className="bg-white dark:bg-slate-900 rounded-lg shadow-lg p-6">
@@ -186,7 +190,7 @@ export default function ClientDetailPage() {
                     <div>
                       <h3 className="font-semibold text-gray-900 dark:text-white">{project.name}</h3>
                       <p className="text-sm text-gray-600 dark:text-slate-300 mt-1">{project.description}</p>
-                      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Prazo: {project.dueDate ? new Date(`${project.dueDate}T00:00:00`).toLocaleDateString("pt-BR") : "Nao informado"} - Prioridade: {project.priority || "Media"}</p>
+                      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Prazo: {project.dueDate ? new Date(`${project.dueDate}T00:00:00`).toLocaleDateString("pt-BR") : "Não informado"} - Prioridade: {project.priority || "Média"}</p>
                     </div>
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -197,7 +201,7 @@ export default function ClientDetailPage() {
                           : "bg-gray-100 text-gray-800"
                       }`}
                     >
-                      {project.completedAt ? "Concluido" : project.status}
+                      {project.completedAt ? "Concluído" : project.status}
                     </span>
                   </div>
                 </Link>
@@ -233,7 +237,7 @@ export default function ClientDetailPage() {
                           : "bg-gray-100 text-gray-800"
                       }`}
                     >
-                      {task.completedAt ? "Concluida" : task.status}
+                      {task.completedAt ? "Concluída" : task.status}
                     </span>
                   </div>
                 </Link>

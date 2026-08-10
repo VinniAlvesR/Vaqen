@@ -1,4 +1,4 @@
-﻿import { z } from "zod"
+import { z } from "zod"
 
 const serverSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -17,9 +17,14 @@ const serverSchema = z.object({
   STRIPE_SECRET_KEY: z.string().min(1).optional(),
   STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
   STRIPE_PRO_PRICE_ID: z.string().min(1).optional(),
-  BETA_INVITE_ONLY: z.enum(["true", "false"]).default("true"),
+  BETA_INVITE_ONLY: z.enum(["true", "false"]).default("false"),
   LEGAL_TERMS_VERSION: z.string().default("2026-07-01"),
   LEGAL_PRIVACY_VERSION: z.string().default("2026-07-01"),
+  NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().min(1).optional(),
+  VAPID_PRIVATE_KEY: z.string().min(1).optional(),
+  VAPID_SUBJECT: z.string().min(1).default("mailto:vaqen.suporte@gmail.com"),
+  CRON_SECRET: z.string().min(16).optional(),
+  BLOB_READ_WRITE_TOKEN: z.string().min(1).optional(),
 })
 
 export type ServerEnv = z.infer<typeof serverSchema>
@@ -32,7 +37,7 @@ export function getServerEnv(): ServerEnv {
   const parsed = serverSchema.safeParse(process.env)
   if (!parsed.success) {
     const keys = parsed.error.issues.map((issue) => issue.path.join(".")).join(", ")
-    throw new Error(`ConfiguraÃ§Ã£o de ambiente invÃ¡lida: ${keys}`)
+    throw new Error(`Configuração de ambiente inválida: ${keys}`)
   }
 
   cached = parsed.data
@@ -57,9 +62,7 @@ export function validateProductionEnv() {
   const hasEmailProvider = Boolean(env.RESEND_API_KEY || (env.GMAIL_SMTP_USER && env.GMAIL_SMTP_APP_PASSWORD))
   if (!hasEmailProvider) missing.push("RESEND_API_KEY ou GMAIL_SMTP_USER/GMAIL_SMTP_APP_PASSWORD")
   if (missing.length) {
-    throw new Error(`ConfiguraÃ§Ã£o de produÃ§Ã£o incompleta: ${missing.join(", ")}`)
+    throw new Error(`Configuração de produção incompleta: ${missing.join(", ")}`)
   }
   return env
 }
-
-

@@ -6,12 +6,16 @@ type PublicConfig = {
   googleAuthEnabled: boolean
   emailDeliveryEnabled: boolean
   billingEnabled: boolean
+  pushNotificationsEnabled: boolean
+  vapidPublicKey: string | null
 }
 
 const defaults: PublicConfig = {
   googleAuthEnabled: false,
   emailDeliveryEnabled: false,
   billingEnabled: false,
+  pushNotificationsEnabled: false,
+  vapidPublicKey: null,
 }
 
 export function usePublicConfig() {

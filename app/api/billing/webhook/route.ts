@@ -21,6 +21,21 @@ function fromUnix(value: number | null | undefined) {
   return value ? new Date(value * 1000) : null
 }
 
+type BillingTx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0]
+
+async function resolveCheckoutUserId(tx: BillingTx, checkout: Stripe.Checkout.Session) {
+  const referencedUserId = checkout.client_reference_id || checkout.metadata?.userId
+  if (referencedUserId) {
+    const user = await tx.user.findUnique({ where: { id: referencedUserId }, select: { id: true } })
+    if (user) return user.id
+  }
+
+  const email = checkout.customer_details?.email || checkout.customer_email
+  if (!email) return null
+  const user = await tx.user.findUnique({ where: { email }, select: { id: true } })
+  return user?.id ?? null
+}
+
 export async function POST(request: NextRequest) {
   const secret = getServerEnv().STRIPE_WEBHOOK_SECRET
   if (!secret) return NextResponse.json({ error: "Webhook não configurado" }, { status: 503 })
@@ -51,13 +66,21 @@ export async function POST(request: NextRequest) {
 
     if (event.type === "checkout.session.completed") {
       const checkout = event.data.object as Stripe.Checkout.Session
-      const userId = checkout.metadata?.userId
+      const userId = await resolveCheckoutUserId(tx, checkout)
       if (userId) {
-        await tx.subscription.updateMany({
+        await tx.subscription.upsert({
           where: { userId },
-          data: {
-            stripeCustomerId: String(checkout.customer),
-            stripeSubscriptionId: String(checkout.subscription),
+          update: {
+            stripeCustomerId: checkout.customer ? String(checkout.customer) : undefined,
+            stripeSubscriptionId: checkout.subscription ? String(checkout.subscription) : undefined,
+          },
+          create: {
+            userId,
+            plan: "FREE",
+            status: "INCOMPLETE",
+            trialEndsAt: new Date(),
+            stripeCustomerId: checkout.customer ? String(checkout.customer) : null,
+            stripeSubscriptionId: checkout.subscription ? String(checkout.subscription) : null,
           },
         })
       }

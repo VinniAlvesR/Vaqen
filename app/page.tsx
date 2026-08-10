@@ -22,7 +22,7 @@ export default function Home() {
         <nav className="mb-8 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 text-lg font-black tracking-tight">
             <Image src="/vaqen-icon.svg" alt="" width={36} height={36} className="rounded-xl" priority />
-            <span>Vaqen Beta</span>
+            <span>Vaqen</span>
           </Link>
           <div />
         </nav>

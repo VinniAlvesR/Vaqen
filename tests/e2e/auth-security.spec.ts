@@ -30,3 +30,29 @@ test("logout revoga a sessão persistida", async ({ playwright }) => {
     await context.dispose()
   }
 })
+
+test("pagina interna sem sessao redireciona para login", async ({ page }) => {
+  await page.goto("/dashboard")
+  await expect(page).toHaveURL(/\/auth\/login/)
+})
+
+test("API privada sem sessao retorna 401", async ({ request }) => {
+  const routes = ["/api/clients", "/api/projects", "/api/tasks", "/api/today", "/api/trash", "/api/billing/status"]
+  for (const route of routes) {
+    const response = await request.get(route)
+    expect(response.status(), route).toBe(401)
+  }
+})
+
+test("write API com origem invalida retorna 403", async ({ playwright }) => {
+  const context = await playwright.request.newContext({
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:3000",
+    extraHTTPHeaders: { origin: "https://evil.example" },
+  })
+  try {
+    const response = await context.post("/api/clients", { data: { name: "Ataque", email: "" } })
+    expect(response.status()).toBe(403)
+  } finally {
+    await context.dispose()
+  }
+})

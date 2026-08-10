@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { Suspense, useMemo, useState } from "react"
 import Link from "next/link"
@@ -34,7 +34,7 @@ function VerifyEmailContent() {
       const response = await fetch("/api/auth/send-verification-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, callbackURL: "/dashboard" }),
+        body: JSON.stringify({ email, callbackURL: "/today" }),
       })
       const body = await response.json().catch(() => null)
 
@@ -56,8 +56,10 @@ function VerifyEmailContent() {
       <div className="mx-auto grid min-h-screen max-w-6xl items-center gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
         <section className="hidden lg:block">
           <Link href="/" className="flex items-center gap-3 text-lg font-black text-white">
-            <Image src="/vaqen-icon.svg" alt="" width={40} height={40} className="rounded-xl border border-white bg-white" priority />
-            <span>Vaqen Beta</span>
+            <span className="flex h-10 w-10 overflow-hidden rounded-xl">
+              <Image src="/vaqen-icon.svg" alt="" width={40} height={40} className="scale-[1.1]" priority />
+            </span>
+            <span>Vaqen</span>
           </Link>
           <p className="mt-8 text-sm font-bold uppercase tracking-[0.24em] text-indigo-300">Confirmação de conta</p>
           <h1 className="mt-4 max-w-xl text-5xl font-black tracking-tight">Falta só verificar seu email.</h1>
@@ -75,8 +77,10 @@ function VerifyEmailContent() {
 
         <section className="mx-auto w-full max-w-xl rounded-[2rem] border border-white/10 bg-white/[0.08] p-6 shadow-2xl backdrop-blur-xl sm:p-8">
           <Link href="/" className="mb-8 flex items-center gap-3 text-lg font-black text-white lg:hidden">
-            <Image src="/vaqen-icon.svg" alt="" width={38} height={38} className="rounded-xl border border-white bg-white" priority />
-            <span>Vaqen Beta</span>
+            <span className="flex h-[38px] w-[38px] overflow-hidden rounded-xl">
+              <Image src="/vaqen-icon.svg" alt="" width={38} height={38} className="scale-[1.1]" priority />
+            </span>
+            <span>Vaqen</span>
           </Link>
 
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/20 text-indigo-100 ring-1 ring-indigo-300/30">

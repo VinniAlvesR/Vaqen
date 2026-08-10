@@ -47,3 +47,6 @@ next-env.d.ts
 /.vercel
 .env*
 !.env.example
+
+# local development uploads
+/public/uploads/avatars/

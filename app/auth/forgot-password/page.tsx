@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { FormEvent, useState } from "react"
 import Link from "next/link"
@@ -80,8 +80,8 @@ const inputClass = "mt-2 w-full rounded-2xl border border-white/10 bg-white/10 p
 function Brand() {
   return (
     <Link href="/" className="flex items-center gap-3 text-lg font-black text-white">
-      <Image src="/vaqen-icon.svg" alt="" width={38} height={38} className="rounded-xl border border-white bg-white" priority />
-      <span>Vaqen Beta</span>
+      <span className="flex h-[38px] w-[38px] items-center justify-center overflow-hidden rounded-xl"><Image src="/vaqen-icon.svg" alt="" width={42} height={42} className="max-w-none shrink-0 rounded-xl" priority /></span>
+      <span>Vaqen</span>
     </Link>
   )
 }

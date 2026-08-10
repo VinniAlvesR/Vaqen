@@ -3,13 +3,13 @@ import { Suspense } from "react";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import QuickCreate from "@/components/QuickCreate";
-import FeedbackWidget from "@/components/FeedbackWidget";
+import NotificationCenter from "@/components/NotificationCenter";
 import AppShell from "@/components/AppShell";
 import { ConfirmProvider } from "@/components/ConfirmDialog";
 import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
-  title: "Vaqen Beta",
+  title: "Vaqen",
   description: "Gerenciamento de clientes, projetos e tarefas com foco no trabalho de hoje.",
   icons: {
     icon: [{ url: "/vaqen-icon.svg?v=5", type: "image/svg+xml" }],
@@ -50,9 +50,9 @@ export default function RootLayout({
       <body className="antialiased bg-slate-50 text-slate-900">
         <ConfirmProvider>
           <Navbar />
+          <NotificationCenter />
         <QuickCreate />
         <Suspense fallback={null}>
-          <FeedbackWidget />
         </Suspense>
         <AppShell>{children}</AppShell>
           <Analytics />

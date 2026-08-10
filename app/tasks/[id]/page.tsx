@@ -34,7 +34,7 @@ type Task = {
   }
 }
 
-const subtaskStatuses = ["Pendente", "Em andamento", "Concluida"]
+const subtaskStatuses = ["Pendente", "Em andamento", "Concluída"]
 
 export default function TaskDetailPage() {
   const confirmAction = useConfirm()
@@ -51,7 +51,7 @@ export default function TaskDetailPage() {
   const fetchTask = useCallback(async () => {
     try {
       setError(null)
-      const response = await fetch(`/api/tasks/${taskId}`, { cache: "no-store" })
+      const response = await fetch(`/api/tasks/${taskId}?t=${Date.now()}`, { cache: "no-store" })
       if (!response.ok) throw new Error("Tarefa não encontrada")
       const data = await response.json()
       setTask(data)
@@ -67,7 +67,7 @@ export default function TaskDetailPage() {
     fetchTask()
   }, [fetchTask])
 
-  async function request(path: string, method: "POST" | "PATCH" | "DELETE", body: object, busy: string) {
+  async function request<T = unknown>(path: string, method: "POST" | "PATCH" | "DELETE", body: object, busy: string): Promise<T | true | false> {
     try {
       setBusyKey(busy)
       setError(null)
@@ -80,8 +80,9 @@ export default function TaskDetailPage() {
         const data = await response.json().catch(() => null)
         throw new Error(data?.error ?? "Não foi possível salvar a alteração")
       }
+      const data = await response.json().catch(() => null)
       await fetchTask()
-      return true
+      return (data as T | null) ?? true
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro desconhecido")
       return false
@@ -113,8 +114,25 @@ export default function TaskDetailPage() {
   async function addSubtask(event: FormEvent) {
     event.preventDefault()
     if (!subtaskTitle.trim()) return
-    if (await request(`/api/tasks/${taskId}/subtasks`, "POST", { title: subtaskTitle }, "subtask-new")) {
+    const created = await request<Subtask>(`/api/tasks/${taskId}/subtasks`, "POST", { title: subtaskTitle }, "subtask-new")
+    if (created) {
       setSubtaskTitle("")
+      if (created !== true && typeof created === "object") {
+        setTask((current) => {
+          if (!current || current.subtasks.some((subtask) => subtask.id === created.id)) return current
+          return {
+            ...current,
+            subtasks: [...current.subtasks, created],
+            summary: {
+              ...current.summary,
+              subtasks: {
+                completed: current.summary.subtasks.completed + (created.completedAt ? 1 : 0),
+                total: current.summary.subtasks.total + 1,
+              },
+            },
+          }
+        })
+      }
     }
   }
 
@@ -235,7 +253,7 @@ export default function TaskDetailPage() {
             {task.subtasks.length ? task.subtasks.map((subtask) => (
               <div key={subtask.id} className="rounded-lg border border-slate-200 dark:border-slate-800 p-3">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <span className={`min-w-0 flex-1 font-medium ${subtask.status === "Concluida" ? "text-slate-400 line-through" : ""}`}>{subtask.title}</span>
+                  <span className={`min-w-0 flex-1 font-medium ${subtask.status === "Concluída" ? "text-slate-400 line-through" : ""}`}>{subtask.title}</span>
                   <select value={subtask.status} disabled={busyKey === `subtask-${subtask.id}`} onChange={(event) => request(`/api/tasks/${taskId}/subtasks`, "PATCH", { subtaskId: subtask.id, status: event.target.value }, `subtask-${subtask.id}`)} className="rounded-lg border border-slate-300 dark:border-slate-700 px-2 py-2 text-sm">
                     {subtaskStatuses.map((status) => <option key={status}>{status}</option>)}
                   </select>
@@ -269,7 +287,7 @@ export default function TaskDetailPage() {
 
       <section className="mt-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow sm:p-6-sm">
         <p className="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Auditoria</p>
-        <h2 className="text-2xl font-bold">Historico automatico</h2>
+        <h2 className="text-2xl font-bold">Histórico automático</h2>
         <div className="mt-5 space-y-3">
           {task.activities.length ? task.activities.map((activity) => (
             <article key={activity.id} className="flex flex-col gap-2 rounded-lg border border-slate-200 dark:border-slate-800 p-4 sm:flex-row sm:items-start sm:justify-between">

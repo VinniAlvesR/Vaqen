@@ -4,7 +4,6 @@ import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { FeedbackTrigger } from "@/components/FeedbackWidget"
 import { useAuth } from "@/hooks/useAuth"
 
 const expandedWidth = 280
@@ -17,8 +16,8 @@ type IconName =
   | "clients"
   | "projects"
   | "tasks"
-  | "search"
-  | "activity"
+  | "reports"
+  | "finance"
   | "trash"
   | "settings"
   | "logout"
@@ -36,19 +35,37 @@ const appLinks: Array<{ href: string; label: string; icon: IconName }> = [
   { href: "/clients", label: "Clientes", icon: "clients" },
   { href: "/projects", label: "Projetos", icon: "projects" },
   { href: "/tasks", label: "Tarefas", icon: "tasks" },
-  { href: "/search", label: "Busca", icon: "search" },
-  { href: "/activity", label: "Historico", icon: "activity" },
+  { href: "/reports", label: "Relatórios", icon: "reports" },
+  { href: "/finance", label: "Financeiro", icon: "finance" },
   { href: "/trash", label: "Lixeira", icon: "trash" },
 ]
 
-const fullPageRoutes = ["/", "/terms", "/privacy"]
+const fullPageRoutes = ["/", "/terms", "/privacy", "/help", "/about", "/pricing", "/billing/success"]
+
+const bottomNavLinks: Array<{ href: string; label: string; icon: IconName }> = [
+  { href: "/today", label: "Hoje", icon: "today" },
+  { href: "/clients", label: "Clientes", icon: "clients" },
+  { href: "/projects", label: "Projetos", icon: "projects" },
+  { href: "/tasks", label: "Tarefas", icon: "tasks" },
+]
+
+const mobileMenuLinks: Array<{ href: string; label: string; icon: IconName }> = [
+  { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
+  { href: "/finance", label: "Financeiro", icon: "finance" },
+  { href: "/reports", label: "Relatórios", icon: "reports" },
+  { href: "/trash", label: "Lixeira", icon: "trash" },
+  { href: "/settings?tab=general", label: "Configurações", icon: "settings" },
+  { href: "/help", label: "Ajuda", icon: "help" },
+  { href: "/about", label: "Sobre", icon: "info" },
+  { href: "/terms", label: "Termos", icon: "billing" },
+  { href: "/privacy", label: "Privacidade", icon: "user" },
+]
 
 export default function Navbar() {
   const { user, isAuthenticated, loading: authLoading, logout } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
   const [accountOpen, setAccountOpen] = useState(false)
-  const [mobileAccountOpen, setMobileAccountOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === "undefined") return "light"
@@ -84,7 +101,6 @@ export default function Navbar() {
   async function handleLogout() {
     await logout()
     setMobileOpen(false)
-    setMobileAccountOpen(false)
     router.push("/")
   }
 
@@ -93,38 +109,31 @@ export default function Navbar() {
 
   if (!isAuthenticated) return null
 
+  const userImage = (user as { image?: string | null } | null)?.image ?? null
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-slate-200 bg-white/95 px-4 shadow-sm backdrop-blur md:hidden dark:border-slate-800 dark:bg-slate-950/95">
-        <button
-          type="button"
-          onClick={() => setMobileOpen(true)}
-          className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 transition hover:bg-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-          aria-label="Abrir menu"
-        >
-          <Icon name="menu" />
-        </button>
-
-        <Link href="/dashboard" className="flex min-w-0 items-center gap-3 text-right">
+      <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center border-b border-slate-200 bg-white/95 px-4 shadow-sm backdrop-blur md:hidden dark:border-slate-800 dark:bg-slate-950/95">
+        <Link href="/today" className="flex min-w-0 items-center gap-3">
+          <Image src="/vaqen-icon.svg" alt="" width={34} height={34} className="rounded-xl" priority />
           <div className="min-w-0">
             <p className="truncate text-sm font-black tracking-tight text-slate-950 dark:text-white">Vaqen</p>
-            <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">Central de gestao</p>
+            <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">Central de gestão</p>
           </div>
-          <Image src="/vaqen-icon.svg" alt="" width={34} height={34} className="rounded-xl border border-white bg-white" priority />
         </Link>
       </header>
 
       {mobileOpen ? (
-        <div className="fixed inset-0 z-[80] md:hidden" role="dialog" aria-modal="true" aria-label="Menu de navegacao">
+        <div className="fixed inset-0 z-[80] md:hidden" role="dialog" aria-modal="true" aria-label="Menu do Vaqen">
           <button className="absolute inset-0 bg-slate-950/55" aria-label="Fechar menu" onClick={() => setMobileOpen(false)} />
-          <aside className="relative flex h-full w-[min(88vw,360px)] flex-col overflow-hidden border-r border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-950">
-            <div className="flex items-center justify-between gap-3 border-b border-slate-200 p-4 dark:border-slate-800">
-              <Link href="/dashboard" className="flex min-w-0 items-center gap-3">
-                <Image src="/vaqen-icon.svg" alt="" width={38} height={38} className="rounded-xl border border-white bg-white" priority />
+          <aside className="absolute inset-x-0 bottom-0 max-h-[86dvh] overflow-y-auto rounded-t-[2rem] border border-slate-200 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-2xl dark:border-slate-800 dark:bg-slate-950">
+            <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-700" />
+            <div className="flex items-center justify-between gap-3">
+              <Link href="/today" onClick={() => setMobileOpen(false)} className="flex min-w-0 items-center gap-3">
+                <Image src="/vaqen-icon.svg" alt="" width={42} height={42} className="rounded-2xl" priority />
                 <div className="min-w-0">
-                  <p className="truncate text-base font-black text-slate-950 dark:text-white">Vaqen Beta</p>
-                  <p className="truncate text-xs text-slate-500 dark:text-slate-400">Organize seu fluxo</p>
+                  <p className="truncate text-base font-black text-slate-950 dark:text-white">Vaqen</p>
+                  <p className="truncate text-xs text-slate-500 dark:text-slate-400">Menu principal</p>
                 </div>
               </Link>
               <button
@@ -137,77 +146,74 @@ export default function Navbar() {
               </button>
             </div>
 
-            <nav className="min-h-0 flex-1 overflow-y-auto p-3">
-              {appLinks.map((link) => (
-                <MobileLink key={link.href} href={link.href} icon={link.icon} active={isActive(pathname, link.href)} onNavigate={() => setMobileOpen(false)}>
+            <div className="mt-4 flex items-center gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900">
+              <Avatar name={user?.name ?? "Usuário"} image={userImage} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-bold text-slate-950 dark:text-white">{user?.name ?? "Usuário"}</p>
+                <p className="truncate text-xs text-slate-500 dark:text-slate-400">{user?.email ?? "Conta Vaqen"}</p>
+              </div>
+            </div>
+
+            <nav className="mt-4 grid grid-cols-2 gap-2">
+              {mobileMenuLinks.map((link) => (
+                <MobileSheetLink key={link.href} href={link.href} icon={link.icon} active={isActive(pathname, link.href.split("?")[0])} onNavigate={() => setMobileOpen(false)}>
                   {link.label}
-                </MobileLink>
+                </MobileSheetLink>
               ))}
             </nav>
 
-            <div className="border-t border-slate-200 p-3 dark:border-slate-800">
-              {mobileAccountOpen ? (
-                <div className="mb-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-slate-900">
-                  <MobileAction href="/settings" icon="settings" onNavigate={() => { setMobileOpen(false); setMobileAccountOpen(false) }}>Configuracoes</MobileAction>
-                  <FeedbackTrigger onOpen={() => { setMobileOpen(false); setMobileAccountOpen(false) }} className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800">
-                    <Icon name="activity" />
-                    Feedback
-                  </FeedbackTrigger>
-                  <MobileAction href="/settings" icon="billing" onNavigate={() => { setMobileOpen(false); setMobileAccountOpen(false) }}>Pagamentos</MobileAction>
-                  <MobileAction href="/terms" icon="billing" onNavigate={() => { setMobileOpen(false); setMobileAccountOpen(false) }}>Termos de Uso</MobileAction>
-                  <MobileAction href="/privacy" icon="user" onNavigate={() => { setMobileOpen(false); setMobileAccountOpen(false) }}>Politica de Privacidade</MobileAction>
-                  <MobileAction href="/about" icon="info" onNavigate={() => { setMobileOpen(false); setMobileAccountOpen(false) }}>Sobre</MobileAction>
-                  <button
-                    type="button"
-                    onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")}
-                    className="flex w-full items-center justify-between rounded-2xl px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                  >
-                    <span className="flex items-center gap-3"><Icon name="theme" /> Tema</span>
-                    <span className={`flex h-6 w-11 items-center rounded-full p-1 transition ${theme === "dark" ? "bg-indigo-600" : "bg-slate-300"}`}>
-                      <span className={`h-4 w-4 rounded-full bg-white transition ${theme === "dark" ? "translate-x-5" : ""}`} />
-                    </span>
-                  </button>
-                  <div className="mt-2 border-t border-slate-200 pt-2 dark:border-slate-800">
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30"
-                    >
-                      <Icon name="logout" />
-                      Sair
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-
+            <div className="mt-4 grid gap-2 border-t border-slate-200 pt-4 dark:border-slate-800">
               <button
                 type="button"
-                onClick={() => setMobileAccountOpen((current) => !current)}
-                className="flex w-full items-center gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-3 text-left transition hover:bg-white dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800"
-                aria-expanded={mobileAccountOpen}
-                aria-label="Abrir menu do perfil"
+                onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")}
+                className="flex w-full items-center justify-between rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
               >
-                <Avatar name={user?.name ?? "Usuario"} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold text-slate-950 dark:text-white">{user?.name ?? "Usuario"}</p>
-                  <p className="truncate text-xs text-slate-500 dark:text-slate-400">{user?.email ?? "Conta Vaqen"}</p>
-                </div>
-                <ChevronIcon direction={mobileAccountOpen ? "left" : "right"} />
+                <span className="flex items-center gap-3"><Icon name="theme" /> Tema</span>
+                <span className={`flex h-6 w-11 items-center rounded-full p-1 transition ${theme === "dark" ? "bg-indigo-600" : "bg-slate-300"}`}>
+                  <span className={`h-4 w-4 rounded-full bg-white transition ${theme === "dark" ? "translate-x-5" : ""}`} />
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex w-full items-center justify-center gap-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700 transition hover:bg-red-100 hover:text-red-800 dark:bg-red-950/40 dark:text-red-200 dark:hover:bg-red-950/70 dark:hover:text-white"
+              >
+                <Icon name="logout" />
+                Sair
               </button>
             </div>
           </aside>
         </div>
       ) : null}
 
-      <aside className="fixed inset-y-0 left-0 z-50 hidden max-h-dvh border-r border-slate-200 bg-white/95 shadow-sm backdrop-blur transition-[width] duration-200 md:block md:w-[var(--sidebar-width,280px)]">
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 px-2 pb-[calc(0.55rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-12px_30px_rgba(15,23,42,0.10)] backdrop-blur md:hidden dark:border-slate-800 dark:bg-slate-950/95">
+        <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
+          {bottomNavLinks.map((link) => (
+            <MobileBottomItem key={link.href} href={link.href} icon={link.icon} active={isActive(pathname, link.href)}>
+              {link.label}
+            </MobileBottomItem>
+          ))}
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-bold transition ${mobileOpen ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"}`}
+            aria-label="Abrir menu"
+          >
+            <span className={`flex h-7 w-7 items-center justify-center rounded-xl ${mobileOpen ? "bg-white/15" : "bg-slate-100 dark:bg-slate-900"}`}><Icon name="menu" /></span>
+            <span className="truncate">Menu</span>
+          </button>
+        </div>
+      </nav>
+
+      <aside className="vaqen-desktop-sidebar fixed inset-y-0 left-0 z-50 hidden max-h-dvh border-r border-slate-200 bg-white/95 shadow-sm backdrop-blur transition-[width] duration-200 md:block md:w-[var(--sidebar-width,280px)]">
         <div className="flex h-full min-h-0 flex-col overflow-hidden">
           {!collapsed ? (
             <header className="flex shrink-0 items-center justify-between gap-3 px-4 py-4">
-              <Link href="/dashboard" className="flex min-w-0 items-center gap-3">
-                <Image src="/vaqen-icon.svg" alt="" width={40} height={40} className="rounded-xl border border-white bg-white" priority />
+              <Link href="/today" className="flex min-w-0 items-center gap-3">
+                <Image src="/vaqen-icon.svg" alt="" width={40} height={40} className="rounded-xl" priority />
                 <div className="min-w-0">
-                  <p className="whitespace-nowrap text-lg font-bold tracking-tight text-slate-950">Vaqen Beta</p>
-                  <p className="hidden truncate text-xs text-slate-500 md:mt-1 md:block">Central de gestao.</p>
+                  <p className="whitespace-nowrap text-lg font-bold tracking-tight text-slate-950">Vaqen</p>
+                  <p className="hidden truncate text-xs text-slate-500 md:mt-1 md:block">Central de gestão</p>
                 </div>
               </Link>
               <SidebarButton label="Fechar sidebar" onClick={() => setCollapsed(true)} collapsed={false} icon={<ChevronIcon direction="left" />} />
@@ -229,8 +235,9 @@ export default function Navbar() {
           <footer className="shrink-0 p-3">
             {accountOpen ? (
               <AccountCard
-                name={user?.name ?? "Usuario"}
+                name={user?.name ?? "Usuário"}
                 email={user?.email ?? ""}
+                image={userImage}
                 theme={theme}
                 onToggleTheme={() => setTheme((current) => current === "dark" ? "light" : "dark")}
                 onLogout={handleLogout}
@@ -245,10 +252,10 @@ export default function Navbar() {
               aria-label="Abrir menu da conta"
               title="Conta"
             >
-              <Avatar name={user?.name ?? "Usuario"} />
+              <Avatar name={user?.name ?? "Usuário"} image={userImage} />
               {!collapsed ? (
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-bold text-slate-950">{user?.name ?? "Usuario"}</p>
+                  <p className="truncate text-sm font-bold text-slate-950">{user?.name ?? "Usuário"}</p>
                   <p className="truncate text-xs text-slate-500">Conta ativa</p>
                 </div>
               ) : null}
@@ -260,7 +267,30 @@ export default function Navbar() {
   )
 }
 
-function MobileLink({ href, icon, active, onNavigate, children }: {
+function MobileBottomItem({ href, icon, active, children }: {
+  href: string
+  icon: IconName
+  active: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <Link
+      href={href}
+      className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-bold transition ${
+        active
+          ? "bg-indigo-600 text-white shadow-sm"
+          : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"
+      }`}
+    >
+      <span className={`flex h-7 w-7 items-center justify-center rounded-xl ${active ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500 dark:bg-slate-900 dark:text-slate-300"}`}>
+        <Icon name={icon} />
+      </span>
+      <span className="truncate">{children}</span>
+    </Link>
+  )
+}
+
+function MobileSheetLink({ href, icon, active, onNavigate, children }: {
   href: string
   icon: IconName
   active: boolean
@@ -271,37 +301,24 @@ function MobileLink({ href, icon, active, onNavigate, children }: {
     <Link
       href={href}
       onClick={onNavigate}
-      className={`mb-1 flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold transition ${
+      className={`flex min-h-20 flex-col justify-between rounded-3xl border p-3 text-sm font-bold transition ${
         active
-          ? "bg-indigo-600 text-white shadow-sm"
-          : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-900"
+          ? "border-indigo-500 bg-indigo-600 text-white shadow-sm"
+          : "border-slate-200 bg-slate-50 text-slate-800 hover:bg-white dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
       }`}
     >
-      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${active ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500 dark:bg-slate-900 dark:text-slate-300"}`}>
+      <span className={`flex h-9 w-9 items-center justify-center rounded-2xl ${active ? "bg-white/15 text-white" : "bg-white text-slate-500 dark:bg-slate-950 dark:text-slate-300"}`}>
         <Icon name={icon} />
       </span>
-      {children}
+      <span className="truncate">{children}</span>
     </Link>
   )
 }
 
-function MobileAction({ href, icon, onNavigate, children }: {
-  href: string
-  icon: IconName
-  onNavigate?: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <Link href={href} onClick={onNavigate} className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800">
-      <Icon name={icon} />
-      {children}
-    </Link>
-  )
-}
-
-function AccountCard({ name, email, theme, onToggleTheme, onLogout, onNavigate }: {
+function AccountCard({ name, email, image, theme, onToggleTheme, onLogout, onNavigate }: {
   name: string
   email: string
+  image?: string | null
   theme: Theme
   onToggleTheme: () => void
   onLogout: () => void
@@ -310,7 +327,7 @@ function AccountCard({ name, email, theme, onToggleTheme, onLogout, onNavigate }
   return (
     <div className="fixed bottom-20 left-3 z-[70] w-64 overflow-visible rounded-3xl border border-slate-200 bg-white p-2 shadow-2xl">
       <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3">
-        <Avatar name={name} />
+        <Avatar name={name} image={image} />
         <div className="min-w-0">
           <p className="truncate text-sm font-bold text-slate-950">{name}</p>
           <p className="truncate text-xs text-slate-500">{email || "Conta Vaqen"}</p>
@@ -318,13 +335,9 @@ function AccountCard({ name, email, theme, onToggleTheme, onLogout, onNavigate }
       </div>
 
       <div className="mt-2 space-y-1 border-t border-slate-100 pt-2">
-        <AccountLink href="/settings" icon="user" onClick={onNavigate}>Perfil</AccountLink>
-        <AccountLink href="/settings" icon="settings" onClick={onNavigate}>Configuracoes</AccountLink>
-        <AccountLink href="/settings" icon="billing" onClick={onNavigate}>Plano e cobranca</AccountLink>
-        <FeedbackTrigger onOpen={onNavigate} className="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
-          <Icon name="activity" />
-          Enviar feedback
-        </FeedbackTrigger>
+        <AccountLink href="/settings?tab=account" icon="user" onClick={onNavigate}>Perfil</AccountLink>
+        <AccountLink href="/settings?tab=general" icon="settings" onClick={onNavigate}>Configurações</AccountLink>
+        <AccountLink href="/settings?tab=billing" icon="billing" onClick={onNavigate}>Plano e cobrança</AccountLink>
         <HelpSubmenu onNavigate={onNavigate} />
         <button
           type="button"
@@ -345,7 +358,7 @@ function AccountCard({ name, email, theme, onToggleTheme, onLogout, onNavigate }
         <button
           type="button"
           onClick={onLogout}
-          className="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50"
+          className="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 hover:text-red-800 dark:text-red-300 dark:hover:bg-red-950/50 dark:hover:text-red-100"
         >
           <Icon name="logout" />
           Sair
@@ -377,7 +390,7 @@ function HelpSubmenu({ onNavigate }: { onNavigate: () => void }) {
           <AccountLink href="/help" icon="help" onClick={onNavigate}>Central de ajuda</AccountLink>
           <AccountLink href="/about" icon="info" onClick={onNavigate}>Sobre</AccountLink>
           <AccountLink href="/terms" icon="billing" onClick={onNavigate}>Termos de Uso</AccountLink>
-          <AccountLink href="/privacy" icon="user" onClick={onNavigate}>Politica de Privacidade</AccountLink>
+          <AccountLink href="/privacy" icon="user" onClick={onNavigate}>Política de Privacidade</AccountLink>
         </div>
       </div>
     </div>
@@ -446,12 +459,12 @@ function SidebarLink({ href, icon, active, collapsed, children }: {
   )
 }
 
-function Avatar({ name }: { name: string }) {
+function Avatar({ name, image }: { name: string; image?: string | null }) {
   const initial = name.trim().charAt(0).toUpperCase() || "U"
 
   return (
-    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-indigo-100 text-sm font-bold text-indigo-700">
-      {initial}
+    <span className={image ? "relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-cover bg-center" : "relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-indigo-100 text-sm font-bold text-indigo-700"} style={image ? { backgroundImage: `url(${image})` } : undefined}>
+      {image ? <span className="sr-only">Foto de perfil</span> : initial}
     </span>
   )
 }
@@ -479,10 +492,10 @@ function Icon({ name }: { name: IconName }) {
       return <svg {...common}><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" /><path d="M8 13h8" /><path d="M8 16h5" /></svg>
     case "tasks":
       return <svg {...common}><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
-    case "search":
-      return <svg {...common}><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.3-4.3" /></svg>
-    case "activity":
-      return <svg {...common}><path d="M3 12h4l3 8 4-16 3 8h4" /></svg>
+    case "reports":
+      return <svg {...common}><path d="M4 19V5" /><path d="M4 19h16" /><path d="M8 16v-5" /><path d="M12 16V8" /><path d="M16 16v-3" /></svg>
+    case "finance":
+      return <svg {...common}><path d="M12 2v20" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6" /></svg>
     case "trash":
       return <svg {...common}><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /></svg>
     case "settings":
@@ -517,5 +530,4 @@ function ChevronIcon({ direction }: { direction: "left" | "right" }) {
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
-
 

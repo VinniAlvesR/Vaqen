@@ -16,12 +16,27 @@ function getAuthPath(request: NextRequest) {
   return request.nextUrl.pathname.replace(/^\/api\/auth/, "") || "/"
 }
 
+async function getEmailScope(request: NextRequest) {
+  try {
+    const body = await request.clone().json()
+    return typeof body?.email === "string" ? body.email : null
+  } catch {
+    return null
+  }
+}
+
 export const GET = handler.GET
 
 export async function POST(request: NextRequest) {
   if (rateLimitedPostPaths.has(getAuthPath(request))) {
-    const limited = await enforceRateLimit(request, "auth")
-    if (limited) return limited
+    const ipLimited = await enforceRateLimit(request, "auth-ip")
+    if (ipLimited) return ipLimited
+
+    const email = await getEmailScope(request)
+    if (email) {
+      const emailLimited = await enforceRateLimit(request, "auth-email", email)
+      if (emailLimited) return emailLimited
+    }
   }
   return handler.POST(request)
 }

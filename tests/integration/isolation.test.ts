@@ -4,6 +4,7 @@ import type { LimitedResource } from "@/lib/plan-rules"
 const enabled = process.env.RUN_INTEGRATION_TESTS === "true"
 let prisma: Awaited<typeof import("@/lib/prisma")>["prisma"]
 let assertCanCreate: (userId: string, resource: LimitedResource) => Promise<void>
+let getCurrentPlanPeriodKey: () => string
 const emails = [
   `isolation-a-${Date.now()}@example.test`,
   `isolation-b-${Date.now()}@example.test`,
@@ -14,7 +15,9 @@ const emails = [
 describe.skipIf(!enabled)("isolamento entre usuários no Postgres", () => {
   beforeAll(async () => {
     prisma = (await import("@/lib/prisma")).prisma
-    assertCanCreate = (await import("@/lib/plans")).assertCanCreate
+    const plans = await import("@/lib/plans")
+    assertCanCreate = plans.assertCanCreate
+    getCurrentPlanPeriodKey = plans.getCurrentPlanPeriodKey
   })
 
   afterAll(async () => {
@@ -30,7 +33,7 @@ describe.skipIf(!enabled)("isolamento entre usuários no Postgres", () => {
   it("conta arquivados e ignora itens na lixeira nos três limites", async () => {
     const user = await prisma.user.create({ data: { email: emails[2], name: "Limits" } })
 
-    const clients = await Promise.all(Array.from({ length: 5 }, (_, index) =>
+    const clients = await Promise.all(Array.from({ length: 9 }, (_, index) =>
       prisma.client.create({
         data: {
           userId: user.id,
@@ -44,7 +47,7 @@ describe.skipIf(!enabled)("isolamento entre usuários no Postgres", () => {
     await expect(assertCanCreate(user.id, "client")).resolves.toBeUndefined()
 
     const activeClient = clients[2]
-    const projects = await Promise.all(Array.from({ length: 10 }, (_, index) =>
+    const projects = await Promise.all(Array.from({ length: 9 }, (_, index) =>
       prisma.project.create({
         data: {
           userId: user.id,
@@ -60,7 +63,7 @@ describe.skipIf(!enabled)("isolamento entre usuários no Postgres", () => {
 
     const activeProject = projects[2]
     const tasks = await prisma.task.createManyAndReturn({
-      data: Array.from({ length: 50 }, (_, index) => ({
+      data: Array.from({ length: 9 }, (_, index) => ({
         userId: user.id,
         projectId: activeProject.id,
         title: `Tarefa ${index}`,
@@ -71,6 +74,29 @@ describe.skipIf(!enabled)("isolamento entre usuários no Postgres", () => {
     await expect(assertCanCreate(user.id, "task")).resolves.toBeUndefined()
   })
 
+
+  it("bloqueia criação quando a cota diária gratuita acaba", async () => {
+    const user = await prisma.user.create({ data: { email: `daily-${Date.now()}@example.test`, name: "Daily" } })
+    emails.push(user.email)
+    const periodKey = getCurrentPlanPeriodKey()
+
+    await prisma.planUsage.create({
+      data: {
+        userId: user.id,
+        resource: "client",
+        periodKey,
+        createdCount: 3,
+      },
+    })
+
+    await expect(assertCanCreate(user.id, "client")).rejects.toMatchObject({
+      code: "PLAN_DAILY_QUOTA_REACHED",
+      resource: "client",
+      limit: 3,
+      used: 3,
+      periodKey,
+    })
+  })
   it("remove dependências sem deixar registros órfãos", async () => {
     const user = await prisma.user.create({ data: { email: emails[3], name: "Cascade" } })
     const client = await prisma.client.create({ data: { userId: user.id, name: "Cliente" } })

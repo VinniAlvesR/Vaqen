@@ -341,7 +341,35 @@ textarea {
   .rounded-\[2rem\] {
     border-radius: 1.5rem;
   }
+
+  main > * {
+    max-width: 100%;
+  }
+
+  section,
+  article,
+  form,
+  nav,
+  header,
+  footer {
+    max-width: 100%;
+  }
+
+  table {
+    width: 100%;
+  }
+
+  .vaqen-mobile-full {
+    width: 100%;
+  }
+
+  .vaqen-desktop-sidebar {
+    display: none !important;
+  }
 }
+
+
+
 .vaqen-feedback-option-active .vaqen-feedback-option-title {
   color: #1e1b4b !important;
 }
@@ -373,5 +401,3 @@ textarea {
 .dark .vaqen-feedback-option-idle .vaqen-feedback-option-description {
   color: #94a3b8 !important;
 }
-
-

@@ -19,7 +19,7 @@ type SystemEmail = {
 }
 
 export async function sendAuthEmail(email: AuthEmail) {
-  const plainText = `${email.heading}\n\n${email.message}\n\n${email.actionLabel}: ${email.actionUrl}\n\nSe voce nao solicitou esta acao, ignore esta mensagem.`
+  const plainText = `${email.heading}\n\n${email.message}\n\n${email.actionLabel}: ${email.actionUrl}\n\nSe você nao solicitou esta ação, ignore esta mensagem.`
 
   await sendEmail({
     to: email.to,
@@ -46,7 +46,7 @@ export async function sendAuthEmail(email: AuthEmail) {
               <span style="word-break:break-all;color:#475569">${escapeHtml(email.actionUrl)}</span>
             </p>
             <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0" />
-            <p style="margin:0;color:#64748b;font-size:12px;line-height:1.6">Se voce nao solicitou esta acao, ignore esta mensagem.</p>
+            <p style="margin:0;color:#64748b;font-size:12px;line-height:1.6">Se você nao solicitou esta ação, ignore esta mensagem.</p>
           </div>
         </body>
       </html>

@@ -14,7 +14,6 @@ export function useAuth() {
     email: string,
     password: string,
     confirmPassword: string,
-    inviteCode = "",
     legalAccepted = false,
     marketingConsent = false
   ) => {
@@ -25,7 +24,6 @@ export function useAuth() {
       const result = await authClient.signUp.email(
         { name, email, password },
         { headers: {
-          "x-beta-invite": inviteCode,
           "x-legal-accepted": String(legalAccepted),
           "x-marketing-consent": String(marketingConsent),
         } }
@@ -40,10 +38,9 @@ export function useAuth() {
     }
   }, [refetch])
 
-  const loginWithGoogle = useCallback(async (inviteCode = "") => {
+  const loginWithGoogle = useCallback(async () => {
     const result = await authClient.signIn.social(
-      { provider: "google", callbackURL: "/dashboard" },
-      { headers: { "x-beta-invite": inviteCode } }
+      { provider: "google", callbackURL: "/today" }
     )
     if (result.error) throw new Error(result.error.message || "Erro ao entrar com Google")
   }, [])

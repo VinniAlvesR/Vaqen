@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { apiError, unauthorized } from "@/lib/api"
-import { assertCanCreate } from "@/lib/plans"
+import { assertCanCreate, recordPlanCreation } from "@/lib/plans"
 import { getUserIdFromRequest } from "@/services/auth"
 import { logActivity } from "@/services/activity"
 
 const optionalDate = z.string().optional().nullable().transform((value) => value ? new Date(`${value}T12:00:00.000Z`) : null)
+
 const projectInput = z.object({
   name: z.string().trim().min(1).max(200),
   clientId: z.string().cuid().optional().nullable(),
@@ -15,6 +16,9 @@ const projectInput = z.object({
   startDate: optionalDate,
   dueDate: optionalDate,
   description: z.string().trim().max(5000).optional().default(""),
+  projectValueCents: z.number().int().min(0).max(999999999).optional().nullable(),
+  commercialStatus: z.string().trim().max(80).optional().nullable(),
+  internalNotes: z.string().trim().max(5000).optional().nullable(),
 })
 
 export async function GET(request: NextRequest) {
@@ -31,13 +35,11 @@ export async function GET(request: NextRequest) {
       ...(lifecycle === "active" ? { archivedAt: null, completedAt: null } : {}),
       ...(lifecycle === "completed" ? { archivedAt: null, completedAt: { not: null } } : {}),
       ...(lifecycle === "archived" ? { archivedAt: { not: null } } : {}),
-      ...(search ? {
-        OR: [
-          { name: { contains: search, mode: "insensitive" } },
-          { description: { contains: search, mode: "insensitive" } },
-          { client: { name: { contains: search, mode: "insensitive" } } },
-        ],
-      } : {}),
+      ...(search ? { OR: [
+        { name: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+        { client: { name: { contains: search, mode: "insensitive" } } },
+      ] } : {}),
     },
     include: { client: { select: { name: true } } },
     orderBy: { createdAt: "desc" },
@@ -50,17 +52,23 @@ export async function POST(request: NextRequest) {
   if (!userId) return unauthorized()
   try {
     const input = projectInput.parse(await request.json())
-    await assertCanCreate(userId, "project")
-    if (input.clientId) {
-      const owner = await prisma.client.count({ where: { id: input.clientId, userId, deletedAt: null } })
-      if (!owner) return NextResponse.json({ error: { code: "INVALID_CLIENT", message: "Cliente inválido" } }, { status: 404 })
-    }
-    const project = await prisma.project.create({ data: { ...input, userId } })
+    const project = await prisma.$transaction(async (tx) => {
+      const subscription = await tx.subscription.findUnique({ where: { userId } })
+      await assertCanCreate(userId, "project", tx, subscription)
+      if (input.clientId) {
+        const owner = await tx.client.count({ where: { id: input.clientId, userId, deletedAt: null } })
+        if (!owner) throw new InvalidRelationError("INVALID_CLIENT", "Cliente inválido")
+      }
+      const created = await tx.project.create({ data: { ...input, userId } })
+      await recordPlanCreation(userId, "project", tx, subscription)
+      return created
+    })
     await logActivity(userId, "project", project.id, "created", `Projeto ${project.name} criado`)
     return NextResponse.json(project, { status: 201 })
   } catch (cause) {
     if (cause instanceof z.ZodError) return NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "Dados do projeto inválidos" } }, { status: 400 })
-    return apiError(cause, "Não foi possível criar o projeto")
+    if (cause instanceof InvalidRelationError) return NextResponse.json({ error: { code: cause.code, message: cause.message } }, { status: 404 })
+    return handleProjectError(cause, "Não foi possível criar o projeto")
   }
 }
 
@@ -76,11 +84,15 @@ export async function PUT(request: NextRequest) {
   }
   const current = await prisma.project.findFirst({ where: { id: body.id, userId, deletedAt: null } })
   if (!current) return NextResponse.json({ error: { code: "NOT_FOUND", message: "Projeto não encontrado" } }, { status: 404 })
-  const project = await prisma.project.update({ where: { id: current.id }, data: input.data })
-  await logActivity(userId, "project", project.id, "updated", `Projeto ${project.name} atualizado`)
-  if (current.status !== project.status) await logActivity(userId, "project", project.id, "status_updated", `Status alterado para ${project.status}`)
-  if (current.dueDate?.getTime() !== project.dueDate?.getTime()) await logActivity(userId, "project", project.id, "deadline_updated", "Prazo do projeto alterado")
-  return NextResponse.json(project)
+  try {
+    const project = await prisma.project.update({ where: { id: current.id }, data: input.data })
+    await logActivity(userId, "project", project.id, "updated", `Projeto ${project.name} atualizado`)
+    if (current.status !== project.status) await logActivity(userId, "project", project.id, "status_updated", `Status alterado para ${project.status}`)
+    if (current.dueDate?.getTime() !== project.dueDate?.getTime()) await logActivity(userId, "project", project.id, "deadline_updated", "Prazo do projeto alterado")
+    return NextResponse.json(project)
+  } catch (cause) {
+    return handleProjectError(cause, "Não foi possível atualizar o projeto")
+  }
 }
 
 export async function DELETE(request: NextRequest) {
@@ -92,4 +104,21 @@ export async function DELETE(request: NextRequest) {
   if (!updated.count) return NextResponse.json({ error: { code: "NOT_FOUND", message: "Projeto não encontrado" } }, { status: 404 })
   await logActivity(userId, "project", id, "deleted", "Projeto movido para a lixeira")
   return NextResponse.json({ success: true })
+}
+
+function handleProjectError(cause: unknown, fallback: string) {
+  if (isMissingMigrationError(cause)) {
+    return NextResponse.json({ error: { code: "MIGRATION_REQUIRED", message: "O banco ainda não recebeu as migrations da versão oficial. Aplique as migrations pendentes e reinicie o servidor local." } }, { status: 503 })
+  }
+  return apiError(cause, fallback)
+}
+
+function isMissingMigrationError(cause: unknown) {
+  return typeof cause === "object" && cause !== null && "code" in cause && ["P2021", "P2022"].includes(String((cause as { code?: unknown }).code))
+}
+
+class InvalidRelationError extends Error {
+  constructor(readonly code: string, message: string) {
+    super(message)
+  }
 }
