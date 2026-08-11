@@ -54,14 +54,18 @@ export function validateProductionEnv() {
     "GOOGLE_CLIENT_SECRET",
     "UPSTASH_REDIS_REST_URL",
     "UPSTASH_REDIS_REST_TOKEN",
-    "STRIPE_SECRET_KEY",
-    "STRIPE_WEBHOOK_SECRET",
-    "STRIPE_PRO_PRICE_ID",
   ] as const
 
   const missing: string[] = required.filter((key) => !env[key])
   const hasEmailProvider = Boolean(env.RESEND_API_KEY || (env.GMAIL_SMTP_USER && env.GMAIL_SMTP_APP_PASSWORD))
   if (!hasEmailProvider) missing.push("RESEND_API_KEY ou GMAIL_SMTP_USER/GMAIL_SMTP_APP_PASSWORD")
+
+  const stripeKeys = ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_PRO_PRICE_ID"] as const
+  const hasPartialStripeConfig = stripeKeys.some((key) => env[key]) && stripeKeys.some((key) => !env[key])
+  if (hasPartialStripeConfig) {
+    missing.push(...stripeKeys.filter((key) => !env[key]))
+  }
+
   if (missing.length) {
     throw new Error(`Configuração de produção incompleta: ${missing.join(", ")}`)
   }
