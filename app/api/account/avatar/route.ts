@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   const file = formData.get("image")
 
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "Envie uma imagem valida." } }, { status: 400 })
+    return NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "Envie uma imagem válida." } }, { status: 400 })
   }
 
   if (!allowedTypes.has(file.type)) {
@@ -34,17 +34,17 @@ export async function POST(request: NextRequest) {
   }
 
   if (file.size > maxSize) {
-    return NextResponse.json({ error: { code: "FILE_TOO_LARGE", message: "A imagem deve ter no maximo 2 MB." } }, { status: 400 })
+    return NextResponse.json({ error: { code: "FILE_TOO_LARGE", message: "A imagem deve ter no máximo 2 MB." } }, { status: 400 })
   }
 
   const extension = getExtension(file.type, file.name)
   if (!allowedExtensions.has(extension)) {
-    return NextResponse.json({ error: { code: "INVALID_FILE_TYPE", message: "Extensao de imagem invalida." } }, { status: 400 })
+    return NextResponse.json({ error: { code: "INVALID_FILE_TYPE", message: "Extensão de imagem inválida." } }, { status: 400 })
   }
 
   const bytes = Buffer.from(await file.arrayBuffer())
   if (!hasValidImageSignature(file.type, bytes)) {
-    return NextResponse.json({ error: { code: "INVALID_FILE_SIGNATURE", message: "Arquivo de imagem invalido." } }, { status: 400 })
+    return NextResponse.json({ error: { code: "INVALID_FILE_SIGNATURE", message: "Arquivo de imagem inválido." } }, { status: 400 })
   }
 
   const currentUser = await prisma.user.findUnique({ where: { id: userId }, select: { image: true } })
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
   } else if (env.NODE_ENV !== "production") {
     imageUrl = await saveLocalAvatar(userId, safeName, extension, bytes)
   } else {
-    return NextResponse.json({ error: { code: "UPLOAD_NOT_CONFIGURED", message: "Upload de foto nao configurado no servidor." } }, { status: 503 })
+    return NextResponse.json({ error: { code: "UPLOAD_NOT_CONFIGURED", message: "Upload de foto não configurado no servidor. Configure BLOB_READ_WRITE_TOKEN na Vercel." } }, { status: 503 })
   }
 
   await prisma.user.update({ where: { id: userId }, data: { image: imageUrl } })

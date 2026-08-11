@@ -105,7 +105,7 @@ export default function SettingsPage() {
     if (!file) return
 
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Use uma imagem JPG, PNG ou WebP de até 2 MB.</p>
+      setMessage("Use uma imagem JPG, PNG ou WebP de até 2 MB.")
       return
     }
 
@@ -114,8 +114,6 @@ export default function SettingsPage() {
       return
     }
 
-    const previewUrl = URL.createObjectURL(file)
-    setAvatarPreview(previewUrl)
     setAvatarBusy(true)
     setMessage("")
 
@@ -125,13 +123,12 @@ export default function SettingsPage() {
       const response = await fetch("/api/account/avatar", { method: "POST", body: formData })
       const data = await response.json().catch(() => ({}))
       if (!response.ok || !data.image) throw new Error(data.error?.message || "Não foi possível enviar a foto.")
-      URL.revokeObjectURL(previewUrl)
       setAvatarPreview(data.image)
+      window.dispatchEvent(new CustomEvent("vaqen:avatar-updated", { detail: { image: data.image } }))
       setMessage("Foto de perfil atualizada.")
       await checkAuth()
     } catch (cause) {
-      URL.revokeObjectURL(previewUrl)
-      setAvatarPreview(null)
+      setAvatarPreview((user as { image?: string | null } | null)?.image ?? null)
       setMessage(cause instanceof Error ? cause.message : "Não foi possível enviar a foto.")
     } finally {
       setAvatarBusy(false)
@@ -146,6 +143,7 @@ export default function SettingsPage() {
       const data = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(data.error?.message || "Não foi possível remover a foto.")
       setAvatarPreview(null)
+      window.dispatchEvent(new CustomEvent("vaqen:avatar-updated", { detail: { image: null } }))
       setMessage("Foto de perfil removida.")
       await checkAuth()
     } catch (cause) {
@@ -416,7 +414,7 @@ export default function SettingsPage() {
                 {billingEnabled && !billing?.proAccess && <button disabled={busy} onClick={() => openBilling("checkout")} className="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white">Assinar Pro</button>}
                 {billingEnabled && billing?.subscription?.hasStripeCustomer && <button disabled={busy} onClick={() => openBilling("portal")} className="rounded-lg border border-slate-300 px-4 py-2 font-semibold dark:border-slate-700">Gerenciar cobrança</button>}
               </div>
-              <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-slate-400">A cobrança ? processada pela Stripe. O Vaqen envia apenas o identificador da sua conta e seu e-mail para vincular a assinatura; dados de cartão não passam pelos servidores do Vaqen.</p>
+              <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-slate-400">A cobrança é processada pela Stripe. O Vaqen envia apenas o identificador da sua conta e seu e-mail para vincular a assinatura; dados de cartão não passam pelos servidores do Vaqen.</p>
             </Section>
           )}
 

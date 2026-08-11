@@ -67,6 +67,7 @@ export default function Navbar() {
   const pathname = usePathname()
   const [accountOpen, setAccountOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [avatarImage, setAvatarImage] = useState<string | null | undefined>(undefined)
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === "undefined") return "light"
     return window.localStorage.getItem("vaqen:theme") === "dark" ? "dark" : "light"
@@ -98,6 +99,17 @@ export default function Navbar() {
     return () => { document.body.style.overflow = "" }
   }, [mobileOpen])
 
+
+  useEffect(() => {
+    function handleAvatarUpdated(event: Event) {
+      const detail = (event as CustomEvent<{ image?: string | null }>).detail
+      setAvatarImage(detail?.image ?? null)
+    }
+
+    window.addEventListener("vaqen:avatar-updated", handleAvatarUpdated)
+    return () => window.removeEventListener("vaqen:avatar-updated", handleAvatarUpdated)
+  }, [])
+
   async function handleLogout() {
     await logout()
     setMobileOpen(false)
@@ -109,7 +121,7 @@ export default function Navbar() {
 
   if (!isAuthenticated) return null
 
-  const userImage = (user as { image?: string | null } | null)?.image ?? null
+  const userImage = avatarImage !== undefined ? avatarImage : (user as { image?: string | null } | null)?.image ?? null
 
   return (
     <>
