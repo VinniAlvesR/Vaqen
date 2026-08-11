@@ -1,31 +1,36 @@
 import { z } from "zod"
 
+const emptyToUndefined = (value: unknown) => typeof value === "string" && value.trim() === "" ? undefined : value
+const optionalString = z.preprocess(emptyToUndefined, z.string().min(1).optional())
+const optionalUrl = z.preprocess(emptyToUndefined, z.string().url().optional())
+const optionalEmail = z.preprocess(emptyToUndefined, z.string().email().optional())
+
 const serverSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DATABASE_URL: z.string().url(),
   DIRECT_URL: z.string().url(),
   BETTER_AUTH_SECRET: z.string().min(32),
   BETTER_AUTH_URL: z.string().url(),
-  BETTER_AUTH_TRUSTED_ORIGINS: z.string().min(1).optional(),
-  GOOGLE_CLIENT_ID: z.string().min(1).optional(),
-  GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
-  RESEND_API_KEY: z.string().min(1).optional(),
-  GMAIL_SMTP_USER: z.string().email().optional(),
-  GMAIL_SMTP_APP_PASSWORD: z.string().min(1).optional(),
+  BETTER_AUTH_TRUSTED_ORIGINS: optionalString,
+  GOOGLE_CLIENT_ID: optionalString,
+  GOOGLE_CLIENT_SECRET: optionalString,
+  RESEND_API_KEY: optionalString,
+  GMAIL_SMTP_USER: optionalEmail,
+  GMAIL_SMTP_APP_PASSWORD: optionalString,
   EMAIL_FROM: z.string().min(1).default("Vaqen <no-reply@vaqen.app>"),
-  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
-  UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
-  STRIPE_SECRET_KEY: z.string().min(1).optional(),
-  STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
-  STRIPE_PRO_PRICE_ID: z.string().min(1).optional(),
+  UPSTASH_REDIS_REST_URL: optionalUrl,
+  UPSTASH_REDIS_REST_TOKEN: optionalString,
+  STRIPE_SECRET_KEY: optionalString,
+  STRIPE_WEBHOOK_SECRET: optionalString,
+  STRIPE_PRO_PRICE_ID: optionalString,
   BETA_INVITE_ONLY: z.enum(["true", "false"]).default("false"),
   LEGAL_TERMS_VERSION: z.string().default("2026-07-01"),
   LEGAL_PRIVACY_VERSION: z.string().default("2026-07-01"),
-  NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().min(1).optional(),
-  VAPID_PRIVATE_KEY: z.string().min(1).optional(),
+  NEXT_PUBLIC_VAPID_PUBLIC_KEY: optionalString,
+  VAPID_PRIVATE_KEY: optionalString,
   VAPID_SUBJECT: z.string().min(1).default("mailto:vaqen.suporte@gmail.com"),
-  CRON_SECRET: z.string().min(16).optional(),
-  BLOB_READ_WRITE_TOKEN: z.string().min(1).optional(),
+  CRON_SECRET: z.preprocess(emptyToUndefined, z.string().min(16).optional()),
+  BLOB_READ_WRITE_TOKEN: optionalString,
 })
 
 export type ServerEnv = z.infer<typeof serverSchema>
