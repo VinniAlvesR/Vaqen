@@ -38,7 +38,7 @@ export function getServerEnv(): ServerEnv {
   const parsed = serverSchema.safeParse(process.env)
   if (!parsed.success) {
     const keys = parsed.error.issues.map((issue) => issue.path.join(".")).join(", ")
-    throw new Error(`Configura??o de ambiente inv?lida: ${keys}`)
+    throw new Error(`Configuração de ambiente inválida: ${keys}`)
   }
 
   cached = parsed.data
@@ -60,7 +60,7 @@ export function validateProductionEnv() {
   const hasEmailProvider = Boolean(env.RESEND_API_KEY || (env.GMAIL_SMTP_USER && env.GMAIL_SMTP_APP_PASSWORD))
   if (!hasEmailProvider) missing.push("RESEND_API_KEY ou GMAIL_SMTP_USER/GMAIL_SMTP_APP_PASSWORD")
   if (missing.length) {
-    throw new Error(`Configura??o de produ??o incompleta: ${missing.join(", ")}`)
+    throw new Error(`Configuração de produção incompleta: ${missing.join(", ")}`)
   }
   return env
 }
