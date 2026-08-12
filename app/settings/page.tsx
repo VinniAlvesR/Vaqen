@@ -105,21 +105,22 @@ export default function SettingsPage() {
     if (!file) return
 
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      setMessage("Use uma imagem JPG, PNG ou WebP de até 2 MB.")
+      setMessage("Use uma imagem JPG, PNG ou WebP de até 5 MB.")
       return
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      setMessage("A imagem deve ter no máximo 2 MB.")
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage("A imagem original deve ter no máximo 5 MB.")
       return
     }
 
     setAvatarBusy(true)
-    setMessage("")
+    setMessage("Otimizando foto...")
 
     try {
+      const optimizedFile = await optimizeAvatarFile(file)
       const formData = new FormData()
-      formData.append("image", file)
+      formData.append("image", optimizedFile)
       const response = await fetch("/api/account/avatar", { method: "POST", body: formData })
       const data = await response.json().catch(() => ({}))
       if (!response.ok || !data.image) throw new Error(data.error?.message || "Não foi possível enviar a foto.")
@@ -151,6 +152,55 @@ export default function SettingsPage() {
     } finally {
       setAvatarBusy(false)
     }
+  }
+
+
+  async function optimizeAvatarFile(file: File) {
+    const image = await loadImage(file)
+    const size = Math.min(512, image.width, image.height)
+    const sourceX = Math.max(0, (image.width - size) / 2)
+    const sourceY = Math.max(0, (image.height - size) / 2)
+
+    const canvas = document.createElement("canvas")
+    canvas.width = 512
+    canvas.height = 512
+    const context = canvas.getContext("2d")
+    if (!context) throw new Error("Não foi possível preparar a foto.")
+
+    context.drawImage(image, sourceX, sourceY, size, size, 0, 0, 512, 512)
+
+    const qualities = [0.86, 0.76, 0.66, 0.56, 0.46]
+    let lastBlob: Blob | null = null
+    for (const quality of qualities) {
+      const blob = await canvasToBlob(canvas, "image/webp", quality)
+      lastBlob = blob
+      if (blob.size <= 560 * 1024) return new File([blob], "avatar.webp", { type: "image/webp" })
+    }
+
+    if (lastBlob && lastBlob.size <= 600 * 1024) return new File([lastBlob], "avatar.webp", { type: "image/webp" })
+    throw new Error("A foto ficou grande demais. Tente outra imagem.")
+  }
+
+  function loadImage(file: File) {
+    return new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new window.Image()
+      const url = URL.createObjectURL(file)
+      image.onload = () => {
+        URL.revokeObjectURL(url)
+        resolve(image)
+      }
+      image.onerror = () => {
+        URL.revokeObjectURL(url)
+        reject(new Error("Não foi possível ler a imagem."))
+      }
+      image.src = url
+    })
+  }
+
+  function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number) {
+    return new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Não foi possível otimizar a foto.")), type, quality)
+    })
   }
 
   async function changePassword() {
@@ -326,7 +376,7 @@ export default function SettingsPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-900 dark:text-white">Foto de perfil</p>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Use uma imagem JPG, PNG ou WebP de até 2 MB.</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Use uma imagem JPG, PNG ou WebP de até 5 MB. A foto será otimizada automaticamente.</p>
                   <div className="mt-4 flex flex-wrap gap-3">
                     <label className="inline-flex cursor-pointer items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-indigo-700 aria-disabled:pointer-events-none aria-disabled:opacity-60" aria-disabled={avatarBusy}>
                       Enviar foto

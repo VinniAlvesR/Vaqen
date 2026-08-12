@@ -8,7 +8,6 @@ const patterns = [
   { name: "Stripe webhook secret", regex: /whsec_[A-Za-z0-9_]+/ },
   { name: "Google API key", regex: /AIza[0-9A-Za-z\-_]{35}/ },
   { name: "Gmail app password value", regex: /GMAIL_SMTP_APP_PASSWORD=(?!""|'')\S+/ },
-  { name: "Vercel Blob token value", regex: /BLOB_READ_WRITE_TOKEN=(?!""|'')\S+/ },
   { name: "Database URL value", regex: /DATABASE_URL=(?!""|'')postgres(?:ql)?:\/\// },
   { name: "Direct database URL value", regex: /DIRECT_URL=(?!""|'')postgres(?:ql)?:\/\// },
   { name: "Better Auth secret value", regex: /BETTER_AUTH_SECRET=(?!""|'')\S{16,}/ },

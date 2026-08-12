@@ -8,7 +8,6 @@ Use este checklist antes de publicar ou depois de qualquer troca de ambiente.
 - `DATABASE_URL` e `DIRECT_URL` estão apenas em Environment Variables da Vercel, nunca no Git.
 - `UPSTASH_REDIS_REST_URL` e `UPSTASH_REDIS_REST_TOKEN` estão configurados em produção; sem eles o rate limit não bloqueia.
 - `CRON_SECRET` tem pelo menos 32 caracteres aleatórios e não foi reutilizado em outro serviço.
-- `BLOB_READ_WRITE_TOKEN` está configurado se upload de avatar estiver ativo.
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` e `VAPID_PRIVATE_KEY` pertencem ao mesmo par VAPID se Web Push estiver ativo.
 - `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` são do app Google OAuth de produção.
 - OAuth Google possui redirect URI de produção: `https://www.vaqen.work/api/auth/callback/google`.

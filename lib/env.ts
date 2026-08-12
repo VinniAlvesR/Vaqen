@@ -4,7 +4,6 @@ const emptyToUndefined = (value: unknown) => typeof value === "string" && value.
 const optionalString = z.preprocess(emptyToUndefined, z.string().min(1).optional())
 const optionalUrl = z.preprocess(emptyToUndefined, z.string().url().optional())
 const optionalEmail = z.preprocess(emptyToUndefined, z.string().email().optional())
-const optionalBlobToken = z.preprocess((value) => typeof value === "string" && value.trim() ? value.trim() : undefined, z.string().optional())
 
 const serverSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -31,7 +30,6 @@ const serverSchema = z.object({
   VAPID_PRIVATE_KEY: optionalString,
   VAPID_SUBJECT: z.string().min(1).default("mailto:vaqen.suporte@gmail.com"),
   CRON_SECRET: z.preprocess(emptyToUndefined, z.string().min(16).optional()),
-  BLOB_READ_WRITE_TOKEN: optionalBlobToken,
 })
 
 export type ServerEnv = z.infer<typeof serverSchema>
