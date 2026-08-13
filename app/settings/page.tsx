@@ -376,7 +376,7 @@ export default function SettingsPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-900 dark:text-white">Foto de perfil</p>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Use uma imagem JPG, PNG ou WebP de até 5 MB. A foto será otimizada automaticamente.</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Use uma imagem JPG, PNG ou WebP de até 5 MB. A foto será enviada para storage seguro.</p>
                   <div className="mt-4 flex flex-wrap gap-3">
                     <label className="inline-flex cursor-pointer items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-indigo-700 aria-disabled:pointer-events-none aria-disabled:opacity-60" aria-disabled={avatarBusy}>
                       Enviar foto

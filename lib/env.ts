@@ -30,6 +30,7 @@ const serverSchema = z.object({
   VAPID_PRIVATE_KEY: optionalString,
   VAPID_SUBJECT: z.string().min(1).default("mailto:vaqen.suporte@gmail.com"),
   CRON_SECRET: z.preprocess(emptyToUndefined, z.string().min(16).optional()),
+  BLOB_READ_WRITE_TOKEN: optionalString,
 })
 
 export type ServerEnv = z.infer<typeof serverSchema>
