@@ -25,7 +25,12 @@ export default function ClientsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("new") === "1") setShowForm(true)
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("new") === "1") setShowForm(true)
+    const lifecycleParam = params.get("lifecycle")
+    if (["active", "archived", "all"].includes(lifecycleParam ?? "")) {
+      setLifecycle(lifecycleParam as "active" | "archived" | "all")
+    }
   }, [])
 
   const fetchClients = useCallback(async () => {
@@ -211,6 +216,11 @@ export default function ClientsPage() {
   const activeCount = clients.filter((client) => !client.archivedAt).length
   const archivedCount = clients.filter((client) => client.archivedAt).length
 
+  function openArchivedClients() {
+    setLifecycle("archived")
+    window.history.pushState(null, "", "/clients?lifecycle=archived")
+  }
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-5 sm:py-6 text-slate-950 sm:px-6 lg:px-8">
       <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow sm:p-6-sm sm:p-5 sm:p-8">
@@ -222,15 +232,24 @@ export default function ClientsPage() {
               Organize contatos, empresas e histórico de relacionamento em um painel limpo.
             </p>
           </div>
-          <button
-            onClick={() => {
-              if (showForm) resetForm()
-              setShowForm(!showForm)
-            }}
-            className="w-fit rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
-          >
-            {showForm ? "Fechar formulário" : "+ Novo cliente"}
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={openArchivedClients}
+              className="w-fit rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-indigo-300 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              Ver arquivados
+            </button>
+            <button
+              onClick={() => {
+                if (showForm) resetForm()
+                setShowForm(!showForm)
+              }}
+              className="w-fit rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+            >
+              {showForm ? "Fechar formulário" : "+ Novo cliente"}
+            </button>
+          </div>
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-3">

@@ -32,7 +32,14 @@ export default function ProjectsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showForm, setShowForm] = useState(false)
 
-  useEffect(() => { if (new URLSearchParams(window.location.search).get("new") === "1") setShowForm(true) }, [])
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("new") === "1") setShowForm(true)
+    const lifecycleParam = params.get("lifecycle")
+    if (["active", "completed", "archived", "all"].includes(lifecycleParam ?? "")) {
+      setLifecycle(lifecycleParam as "active" | "completed" | "archived" | "all")
+    }
+  }, [])
 
   const fetchClients = useCallback(async () => {
     try {
@@ -110,10 +117,15 @@ export default function ProjectsPage() {
   const completedCount = projects.filter((project) => project.completedAt).length
   const archivedCount = projects.filter((project) => project.archivedAt).length
 
+  function openArchivedProjects() {
+    setLifecycle("archived")
+    window.history.pushState(null, "", "/projects?lifecycle=archived")
+  }
+
   return (
     <main className="min-h-screen px-4 py-5 text-slate-950 sm:px-6 sm:py-6 lg:px-8 dark:text-white">
       <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-sm font-semibold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-300">Entregas</p><h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Projetos</h1><p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">Acompanhe status, prazos, prioridades e valor de cada entrega.</p></div><button onClick={openNewProjectForm} className="w-fit rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700">+ Novo projeto</button></div>
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-sm font-semibold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-300">Entregas</p><h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Projetos</h1><p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">Acompanhe status, prazos, prioridades e valor de cada entrega.</p></div><div className="flex flex-wrap gap-3"><button type="button" onClick={openArchivedProjects} className="w-fit rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-indigo-300 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">Ver arquivados</button><button onClick={openNewProjectForm} className="w-fit rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700">+ Novo projeto</button></div></div>
         <div className="mt-6 grid gap-3 sm:grid-cols-4"><SummaryCard label="Na listagem" value={projects.length} /><SummaryCard label="Ativos" value={activeCount} /><SummaryCard label="Concluídos" value={completedCount} /><SummaryCard label="Arquivados" value={archivedCount} /></div>
       </section>
       {error ? <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700 dark:border-red-900/70 dark:bg-red-950/40 dark:text-red-200">{error}</div> : null}
